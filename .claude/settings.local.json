@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "mcp__ui-layouts-mcp__search_components",
+      "mcp__ui-layouts-mcp__get_source_code",
+      "mcp__ui-layouts-mcp__get_docs",
+      "Bash(npx svgo:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(/Users/richardtrinh/Development/projects/web/ag-quota-watch/node_modules/.bin/tsc:*)",
+      "Bash(npx @vscode/vsce package:*)",
+      "Bash(/Users/richardtrinh/Development/projects/web/ag-quota-watch/node_modules/.bin/vsce:*)",
+      "Bash(bash -c \"cd /Users/richardtrinh/Development/projects/web/ag-quota-watch && ./node_modules/.bin/vsce package --allow-missing-repository\")",
+      "Bash(bash -c \"cd /Users/richardtrinh/Development/projects/web/ag-quota-watch && rm -f ag-quota-watch-0.1.0.vsix && ./node_modules/.bin/vsce package --allow-missing-repository\")",
+      "Bash(node scripts/check-locale-keys.cjs:*)"
+    ]
+  }
+}
