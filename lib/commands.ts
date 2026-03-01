@@ -155,3 +155,28 @@ export async function handleDismissOnboarding(): Promise<CommandResponse> {
     return { ok: false, error: String(e) };
   }
 }
+
+import { scrapeTabMemory } from './memory';
+
+export async function handleGetMemoryUsage(): Promise<CommandResponse> {
+  try {
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    const memoryInfos = await scrapeTabMemory(tabs);
+
+    // Optionally fetch categories from the latest session to attach to results
+    const sessions = await storage.getSessions();
+    if (sessions.length > 0) {
+      const latestSession = sessions[sessions.length - 1]; // Assuming appended sequentially
+      const urlToCategory = new Map(latestSession.tabs.map((t) => [t.url, t.category]));
+      for (const info of memoryInfos) {
+        if (urlToCategory.has(info.url)) {
+          info.category = urlToCategory.get(info.url);
+        }
+      }
+    }
+
+    return { ok: true, data: memoryInfos };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

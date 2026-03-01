@@ -22,7 +22,9 @@
       "Bash(bun run:*)",
       "Bash(bun add:*)",
       "Bash(bunx husky:*)",
-      "Bash(bunx biome:*)"
+      "Bash(bunx biome:*)",
+      "WebSearch",
+      "WebFetch(domain:developer.chrome.com)"
     ]
   }
 }

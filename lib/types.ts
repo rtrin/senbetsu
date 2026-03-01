@@ -35,6 +35,15 @@ export interface SavedSession {
 
 // ─── Popup Commands ─────────────────────────────────────────────
 
+export interface TabMemoryInfo {
+  tabId: number;
+  title: string;
+  url: string;
+  favIconUrl: string;
+  jsHeapUsedMB: number;
+  category?: string;
+}
+
 export interface CmdSaveAndGroup {
   type: 'CMD_SAVE_AND_GROUP';
   userPrompt?: string;
@@ -69,6 +78,10 @@ export interface CmdDismissOnboarding {
   type: 'CMD_DISMISS_ONBOARDING';
 }
 
+export interface CmdGetMemoryUsage {
+  type: 'CMD_GET_MEMORY_USAGE';
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdRestoreSession
@@ -76,11 +89,13 @@ export type PopupCommand =
   | CmdDeleteSession
   | CmdCloseTab
   | CmdCloseGroup
-  | CmdDismissOnboarding;
+  | CmdDismissOnboarding
+  | CmdGetMemoryUsage;
 
 export interface CommandResponse {
   ok: boolean;
   error?: string;
+  data?: any;
 }
 
 export type ExtensionMessage = PopupCommand;

@@ -3,6 +3,7 @@ import {
   handleCloseTab,
   handleDeleteSession,
   handleDismissOnboarding,
+  handleGetMemoryUsage,
   handleRestoreSession,
   handleSaveAndGroup,
   handleSwitchTab,
@@ -39,6 +40,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_DISMISS_ONBOARDING':
           responsePromise = handleDismissOnboarding();
+          break;
+        case 'CMD_GET_MEMORY_USAGE':
+          responsePromise = handleGetMemoryUsage();
           break;
         default: {
           const _exhaustive: never = message;

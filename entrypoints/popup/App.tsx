@@ -3,7 +3,10 @@ import { STORAGE_KEYS } from '@/lib/constants';
 import { storage } from '@/lib/storage';
 import type { AppSettings, CommandResponse, PopupCommand, SavedSession } from '@/lib/types';
 import './App.css';
+
+import type { TabMemoryInfo } from '@/lib/types';
 import { Header } from './components/Header';
+import { MemoryUsageList } from './components/MemoryUsageList';
 import { OnboardingBanner } from './components/OnboardingBanner';
 import { SaveGroupButton } from './components/SaveGroupButton';
 import { SessionHistory } from './components/SessionHistory';
@@ -18,6 +21,9 @@ function App() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [isWorking, setIsWorking] = useState(false);
+  const [viewMode, setViewMode] = useState<'groups' | 'memory'>('groups');
+  const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
+  const [isFetchingMemory, setIsFetchingMemory] = useState(false);
   const liveTabs = useCurrentTabs();
 
   // Load initial data
@@ -56,6 +62,23 @@ function App() {
       setIsWorking(false);
     }
   }, []);
+
+  const fetchMemoryUsage = useCallback(async () => {
+    setIsFetchingMemory(true);
+    try {
+      const resp = await sendCommand({ type: 'CMD_GET_MEMORY_USAGE' });
+      if (resp.ok && resp.data) {
+        setMemoryInfos(resp.data);
+      }
+    } finally {
+      setIsFetchingMemory(false);
+    }
+  }, []);
+
+  const handleSwitchToMemory = useCallback(() => {
+    setViewMode('memory');
+    fetchMemoryUsage();
+  }, [fetchMemoryUsage]);
 
   const handleSwitchTab = useCallback((tabId: number) => {
     sendCommand({ type: 'CMD_SWITCH_TAB', tabId });
@@ -102,13 +125,40 @@ function App() {
 
       <SaveGroupButton isWorking={isWorking} onSave={handleSaveAndGroup} />
 
-      <TabCategoryList
-        tabs={liveTabs}
-        latestSession={latestSession}
-        onSwitchTab={handleSwitchTab}
-        onCloseTab={handleCloseTab}
-        onCloseGroup={handleCloseGroup}
-      />
+      <div className="view-toggle">
+        <button
+          type="button"
+          className={`toggle-btn ${viewMode === 'groups' ? 'active' : ''}`}
+          onClick={() => setViewMode('groups')}
+        >
+          Groups
+        </button>
+        <button
+          type="button"
+          className={`toggle-btn ${viewMode === 'memory' ? 'active' : ''}`}
+          onClick={handleSwitchToMemory}
+        >
+          Memory
+        </button>
+      </div>
+
+      {viewMode === 'groups' ? (
+        <TabCategoryList
+          tabs={liveTabs}
+          latestSession={latestSession}
+          onSwitchTab={handleSwitchTab}
+          onCloseTab={handleCloseTab}
+          onCloseGroup={handleCloseGroup}
+        />
+      ) : (
+        <MemoryUsageList
+          memoryInfos={memoryInfos.filter((info) => liveTabs.some((t) => t.id === info.tabId))}
+          isFetching={isFetchingMemory}
+          onSwitchTab={handleSwitchTab}
+          onCloseTab={handleCloseTab}
+          onRefresh={fetchMemoryUsage}
+        />
+      )}
 
       <SessionHistory
         sessions={sessions}
