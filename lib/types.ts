@@ -35,12 +35,15 @@ export interface SavedSession {
 
 // ─── Popup Commands ─────────────────────────────────────────────
 
+export type MemoryLevel = 'high' | 'medium' | 'low';
+
 export interface TabMemoryInfo {
   tabId: number;
   title: string;
   url: string;
   favIconUrl: string;
   jsHeapUsedMB: number;
+  memoryLevel?: MemoryLevel;
   category?: string;
 }
 

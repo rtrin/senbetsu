@@ -8,11 +8,6 @@ interface MemoryUsageListProps {
   onRefresh: () => void;
 }
 
-function formatMemory(mb: number): string {
-  if (mb >= 1) return `${mb.toFixed(1)} MB`;
-  return `${(mb * 1024).toFixed(0)} KB`;
-}
-
 export function MemoryUsageList({
   memoryInfos,
   isFetching,
@@ -67,15 +62,11 @@ export function MemoryUsageList({
                   <span className="tab-item__favicon-fallback" />
                 )}
                 <span className="tab-item__title">{info.title || info.url}</span>
-                <span
-                  className="tab-item__memory"
-                  style={{
-                    fontWeight: idx < 3 ? 'bold' : 'normal',
-                    color: idx < 3 && info.jsHeapUsedMB > 10 ? 'var(--color-red)' : 'inherit',
-                  }}
-                >
-                  {formatMemory(info.jsHeapUsedMB)}
-                </span>
+                {info.memoryLevel && (
+                  <span className={`memory-badge memory-badge--${info.memoryLevel}`}>
+                    {info.memoryLevel.charAt(0).toUpperCase() + info.memoryLevel.slice(1)}
+                  </span>
+                )}
               </button>
               <button
                 type="button"

@@ -52,5 +52,33 @@ export async function scrapeTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemor
     }
   }
 
-  return results.sort((a, b) => b.jsHeapUsedMB - a.jsHeapUsedMB);
+  const sortedResults = results.sort((a, b) => b.jsHeapUsedMB - a.jsHeapUsedMB);
+
+  // Compute memory levels
+  if (sortedResults.length > 0) {
+    if (sortedResults.length <= 3) {
+      // For very few tabs, use absolute thresholds
+      for (const info of sortedResults) {
+        if (info.jsHeapUsedMB > 100) info.memoryLevel = 'high';
+        else if (info.jsHeapUsedMB > 30) info.memoryLevel = 'medium';
+        else info.memoryLevel = 'low';
+      }
+    } else {
+      // Use percentile logic for > 3 tabs
+      const highCutoff = sortedResults[Math.floor(sortedResults.length * 0.25)].jsHeapUsedMB;
+      const lowCutoff = sortedResults[Math.floor(sortedResults.length * 0.75)].jsHeapUsedMB;
+
+      for (const info of sortedResults) {
+        if (info.jsHeapUsedMB >= highCutoff || info.jsHeapUsedMB > 100) {
+          info.memoryLevel = 'high';
+        } else if (info.jsHeapUsedMB > lowCutoff) {
+          info.memoryLevel = 'medium';
+        } else {
+          info.memoryLevel = 'low';
+        }
+      }
+    }
+  }
+
+  return sortedResults;
 }

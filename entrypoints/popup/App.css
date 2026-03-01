@@ -503,10 +503,34 @@
   }
 }
 
-.tab-item__memory {
-  font-size: 12px;
-  color: var(--color-grey);
-  white-space: nowrap;
+.memory-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
   margin-left: 8px;
-  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.memory-badge--high {
+  color: var(--color-red);
+  background-color: rgba(239, 68, 68, 0.15); /* roughly tailwind red-500 */
+}
+
+.memory-badge--medium {
+  color: #f59e0b; /* amber-500 */
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+.memory-badge--low {
+  color: var(--color-grey);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-color-scheme: light) {
+  .memory-badge--low {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 }
