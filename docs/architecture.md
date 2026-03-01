@@ -47,14 +47,14 @@ The Background Service Worker serves as the operational brain of the extension.
 
 ### C. AI Classification Engine (`lib/ai.ts`)
 Handles the payload generation and network request to the generic OpenAI Chat Completions API.
-- **Prompting:** Uses a strict system prompt enforcing a single-category JSON response (e.g., `{"category": "Development"}`).
+- **Prompting:** Uses a zero-shot system prompt instructing the AI to dynamically generate categories (max 5-7). If the user provides a custom instruction prompt, the AI strictly categorizes tabs based on that prompt. Enforces a single-category JSON response (e.g., `{"category": "React Frameworks"}`).
 - **Batching:** `classifyTabs()` resolves multiple requests concurrently using `Promise.allSettled`.
 
 ### D. Native Tab Grouping (`lib/grouping.ts`)
 Turns the AI classifications into physical browser changes using the `chrome.tabGroups` and `chrome.tabs` APIs.
 - Maintains in-memory maps linking `windowId` ⭢ `category` ⭢ `groupId`.
 - Re-uses existing category groups in the current window before creating new ones.
-- Assigns specific predefined Chrome Native Colors (e.g., Development = Blue) defined in `lib/constants.ts`.
+- Assigns specific predefined Chrome Native Colors (defined in `lib/constants.ts`) by hashing the dynamic category string using `getCategoryColor()` from `lib/utils.ts`.
 
 ---
 
@@ -67,7 +67,7 @@ The interface is a standard React SPA utilizing localized CSS modules or standar
 - **components/:**
   - `Header.tsx`: Title and current tab counter.
   - `OnboardingBanner.tsx`: Greets new users and prompts the first manual classification.
-  - `SaveGroupButton.tsx`: Trigger to classify and snapshot the current session workspace.
+  - `SaveGroupButton.tsx`: Trigger to classify and snapshot the current session workspace. Includes an optional text input field for users to provide a custom sorting prompt to the AI.
   - `SessionHistory.tsx`: Renders previously saved session snapshots.
   - `TabCategoryList.tsx`: Displays live tabs organized by their AI-assigned category.
 

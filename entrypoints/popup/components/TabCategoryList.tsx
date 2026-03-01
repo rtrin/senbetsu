@@ -1,10 +1,12 @@
-import { CATEGORY_COLORS } from '@/lib/constants';
 import type { SavedSession, TabCategory } from '@/lib/types';
+import { getCategoryColor } from '@/lib/utils';
 
 interface TabCategoryListProps {
   tabs: chrome.tabs.Tab[];
   latestSession: SavedSession | null;
   onSwitchTab: (tabId: number) => void;
+  onCloseTab: (tabId: number) => void;
+  onCloseGroup: (tabIds: number[]) => void;
 }
 
 interface CategorizedTab {
@@ -16,12 +18,18 @@ interface CategorizedTab {
   isActive: boolean;
 }
 
-function getCategoryColor(category: TabCategory): string {
-  const color = CATEGORY_COLORS[category] ?? 'grey';
+function getCategoryColorVar(category: TabCategory): string {
+  const color = getCategoryColor(category);
   return `var(--color-${color})`;
 }
 
-export function TabCategoryList({ tabs, latestSession, onSwitchTab }: TabCategoryListProps) {
+export function TabCategoryList({
+  tabs,
+  latestSession,
+  onSwitchTab,
+  onCloseTab,
+  onCloseGroup,
+}: TabCategoryListProps) {
   if (!latestSession) return null;
 
   // Build a URL → category map from the latest session
@@ -57,32 +65,49 @@ export function TabCategoryList({ tabs, latestSession, onSwitchTab }: TabCategor
           <div className="tab-group__header">
             <span
               className="tab-group__dot"
-              style={{ backgroundColor: getCategoryColor(category) }}
+              style={{ backgroundColor: getCategoryColorVar(category) }}
             />
             <span className="tab-group__name">{category}</span>
             <span className="tab-group__count">{categoryTabs.length}</span>
+            <button
+              type="button"
+              className="close-btn close-btn--group"
+              onClick={() => onCloseGroup(categoryTabs.map((t) => t.tabId))}
+              title={`Close all ${categoryTabs.length} tabs in "${category}"`}
+            >
+              ×
+            </button>
           </div>
           {categoryTabs.map((tab) => (
-            <button
-              key={tab.tabId}
-              type="button"
-              className={`tab-item ${tab.isActive ? 'tab-item--active' : ''}`}
-              onClick={() => onSwitchTab(tab.tabId)}
-              title={tab.url}
-            >
-              {tab.favIconUrl ? (
-                <img
-                  className="tab-item__favicon"
-                  src={tab.favIconUrl}
-                  alt=""
-                  width={16}
-                  height={16}
-                />
-              ) : (
-                <span className="tab-item__favicon-fallback" />
-              )}
-              <span className="tab-item__title">{tab.title}</span>
-            </button>
+            <div key={tab.tabId} className="tab-item-row">
+              <button
+                type="button"
+                className={`tab-item ${tab.isActive ? 'tab-item--active' : ''}`}
+                onClick={() => onSwitchTab(tab.tabId)}
+                title={tab.url}
+              >
+                {tab.favIconUrl ? (
+                  <img
+                    className="tab-item__favicon"
+                    src={tab.favIconUrl}
+                    alt=""
+                    width={16}
+                    height={16}
+                  />
+                ) : (
+                  <span className="tab-item__favicon-fallback" />
+                )}
+                <span className="tab-item__title">{tab.title}</span>
+              </button>
+              <button
+                type="button"
+                className="close-btn close-btn--tab"
+                onClick={() => onCloseTab(tab.tabId)}
+                title="Close tab"
+              >
+                ×
+              </button>
+            </div>
           ))}
         </div>
       ))}

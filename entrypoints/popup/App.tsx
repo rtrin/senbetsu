@@ -42,10 +42,13 @@ function App() {
     return () => chrome.storage.onChanged.removeListener(handler);
   }, []);
 
-  const handleSaveAndGroup = useCallback(async () => {
+  const handleSaveAndGroup = useCallback(async (prompt?: string) => {
     setIsWorking(true);
     try {
-      const resp = await sendCommand({ type: 'CMD_SAVE_AND_GROUP' });
+      const resp = await sendCommand({
+        type: 'CMD_SAVE_AND_GROUP',
+        userPrompt: prompt,
+      });
       if (!resp.ok) {
         console.error('[senbetsu] Save & group failed:', resp.error);
       }
@@ -57,6 +60,14 @@ function App() {
   const handleSwitchTab = useCallback((tabId: number) => {
     sendCommand({ type: 'CMD_SWITCH_TAB', tabId });
     window.close();
+  }, []);
+
+  const handleCloseTab = useCallback((tabId: number) => {
+    sendCommand({ type: 'CMD_CLOSE_TAB', tabId });
+  }, []);
+
+  const handleCloseGroup = useCallback((tabIds: number[]) => {
+    sendCommand({ type: 'CMD_CLOSE_GROUP', tabIds });
   }, []);
 
   const handleRestoreSession = useCallback((sessionId: string) => {
@@ -84,7 +95,7 @@ function App() {
       {!settings.hasSeenOnboarding && httpTabs.length > 0 && (
         <OnboardingBanner
           tabCount={httpTabs.length}
-          onAccept={handleSaveAndGroup}
+          onAccept={() => handleSaveAndGroup()}
           onDismiss={handleDismissOnboarding}
         />
       )}
@@ -95,6 +106,8 @@ function App() {
         tabs={liveTabs}
         latestSession={latestSession}
         onSwitchTab={handleSwitchTab}
+        onCloseTab={handleCloseTab}
+        onCloseGroup={handleCloseGroup}
       />
 
       <SessionHistory

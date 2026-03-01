@@ -1,5 +1,5 @@
-import { CATEGORY_COLORS } from './constants';
 import type { ClassificationResult, TabCategory } from './types';
+import { getCategoryColor } from './utils';
 
 // windowId -> category -> groupId
 const activeGroups = new Map<number, Map<TabCategory, number>>();
@@ -7,19 +7,38 @@ const activeGroups = new Map<number, Map<TabCategory, number>>();
 // tabId -> category
 const tabCategories = new Map<number, TabCategory>();
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Force Chrome to render the group title by toggling collapsed state.
+ * Chrome has a known bug where tabGroups.update sets the title in the API
+ * but the UI doesn't render it until the group is collapsed/uncollapsed.
+ */
+async function forceRenderTitle(
+  groupId: number,
+  title: string,
+  color: chrome.tabGroups.ColorEnum,
+): Promise<void> {
+  // Set title + collapse to force Chrome to render the title chip
+  await chrome.tabGroups.update(groupId, { title, color, collapsed: true });
+  await delay(50);
+  // Uncollapse to show tabs again — title should now be visible
+  await chrome.tabGroups.update(groupId, { collapsed: false });
+}
+
 async function findOrCreateGroup(windowId: number, category: TabCategory): Promise<number | null> {
   const windowGroups = activeGroups.get(windowId) ?? new Map();
   activeGroups.set(windowId, windowGroups);
 
   const existingId = windowGroups.get(category);
 
-  // Verify the group still exists
   if (existingId !== undefined) {
     try {
       await chrome.tabGroups.get(existingId);
       return existingId;
     } catch {
-      // Group was closed by user — remove stale reference
       windowGroups.delete(category);
     }
   }
@@ -61,31 +80,19 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
     for (const [category, tabIds] of categoryMap.entries()) {
       try {
         const existingGroupId = await findOrCreateGroup(windowId, category);
+        const color = getCategoryColor(category);
         let groupId: number;
 
         if (existingGroupId !== null) {
           groupId = existingGroupId;
           await chrome.tabs.group({ tabIds, groupId });
-          // Redundantly update title to fix Chrome rendering bug
-          setTimeout(() => {
-            chrome.tabGroups.update(groupId, { title: category }).catch(() => {});
-          }, 100);
         } else {
           groupId = await chrome.tabs.group({ tabIds });
-          await chrome.tabGroups.update(groupId, {
-            title: category,
-            color: CATEGORY_COLORS[category],
-            collapsed: false,
-          });
-
-          // Hack to ensure Chrome renders the title properly on creation
-          setTimeout(() => {
-            chrome.tabGroups.update(groupId, { title: category }).catch(() => {});
-          }, 100);
-
           const windowGroups = activeGroups.get(windowId)!;
           windowGroups.set(category, groupId);
         }
+
+        await forceRenderTitle(groupId, category, color);
 
         for (const tabId of tabIds) {
           tabCategories.set(tabId, category);

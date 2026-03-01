@@ -1,4 +1,6 @@
 import {
+  handleCloseGroup,
+  handleCloseTab,
   handleDeleteSession,
   handleDismissOnboarding,
   handleRestoreSession,
@@ -18,7 +20,7 @@ export default defineBackground(() => {
 
       switch (message.type) {
         case 'CMD_SAVE_AND_GROUP':
-          responsePromise = handleSaveAndGroup();
+          responsePromise = handleSaveAndGroup(message.userPrompt);
           break;
         case 'CMD_RESTORE_SESSION':
           responsePromise = handleRestoreSession(message.sessionId);
@@ -28,6 +30,12 @@ export default defineBackground(() => {
           break;
         case 'CMD_DELETE_SESSION':
           responsePromise = handleDeleteSession(message.sessionId);
+          break;
+        case 'CMD_CLOSE_TAB':
+          responsePromise = handleCloseTab(message.tabId);
+          break;
+        case 'CMD_CLOSE_GROUP':
+          responsePromise = handleCloseGroup(message.tabIds);
           break;
         case 'CMD_DISMISS_ONBOARDING':
           responsePromise = handleDismissOnboarding();

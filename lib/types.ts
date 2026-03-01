@@ -1,19 +1,6 @@
 // ─── Tab Categories ──────────────────────────────────────────────
 
-export const TAB_CATEGORIES = [
-  'Social Media',
-  'Development',
-  'Shopping',
-  'News',
-  'Entertainment',
-  'Work',
-  'Communication',
-  'Reference',
-  'Finance',
-  'Other',
-] as const;
-
-export type TabCategory = (typeof TAB_CATEGORIES)[number];
+export type TabCategory = string;
 
 export type TabGroupColor =
   | 'grey'
@@ -50,6 +37,7 @@ export interface SavedSession {
 
 export interface CmdSaveAndGroup {
   type: 'CMD_SAVE_AND_GROUP';
+  userPrompt?: string;
 }
 
 export interface CmdRestoreSession {
@@ -67,6 +55,16 @@ export interface CmdDeleteSession {
   sessionId: string;
 }
 
+export interface CmdCloseTab {
+  type: 'CMD_CLOSE_TAB';
+  tabId: number;
+}
+
+export interface CmdCloseGroup {
+  type: 'CMD_CLOSE_GROUP';
+  tabIds: number[];
+}
+
 export interface CmdDismissOnboarding {
   type: 'CMD_DISMISS_ONBOARDING';
 }
@@ -76,6 +74,8 @@ export type PopupCommand =
   | CmdRestoreSession
   | CmdSwitchTab
   | CmdDeleteSession
+  | CmdCloseTab
+  | CmdCloseGroup
   | CmdDismissOnboarding;
 
 export interface CommandResponse {
@@ -87,17 +87,23 @@ export type ExtensionMessage = PopupCommand;
 
 // ─── Classification ──────────────────────────────────────────────
 
-export interface ClassificationRequest {
+export interface TabInfo {
   tabId: number;
   url: string;
   title: string;
-  description: string;
-  siteName: string;
+  bodyText: string;
 }
 
 export interface ClassificationResult {
   tabId: number;
   category: TabCategory;
+}
+
+export interface BatchClassificationResponse {
+  groups: Array<{
+    name: string;
+    tabIds: number[];
+  }>;
 }
 
 // ─── OpenAI API Types ────────────────────────────────────────────
@@ -120,8 +126,4 @@ export interface OpenAIChatResponse {
       content: string;
     };
   }>;
-}
-
-export interface ClassificationResponse {
-  category: string;
 }
