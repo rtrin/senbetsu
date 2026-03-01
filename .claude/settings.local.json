@@ -18,7 +18,11 @@
       "Bash(/Users/richardtrinh/Development/projects/web/ag-quota-watch/node_modules/.bin/vsce:*)",
       "Bash(bash -c \"cd /Users/richardtrinh/Development/projects/web/ag-quota-watch && ./node_modules/.bin/vsce package --allow-missing-repository\")",
       "Bash(bash -c \"cd /Users/richardtrinh/Development/projects/web/ag-quota-watch && rm -f ag-quota-watch-0.1.0.vsix && ./node_modules/.bin/vsce package --allow-missing-repository\")",
-      "Bash(node scripts/check-locale-keys.cjs:*)"
+      "Bash(node scripts/check-locale-keys.cjs:*)",
+      "Bash(bun run:*)",
+      "Bash(bun add:*)",
+      "Bash(bunx husky:*)",
+      "Bash(bunx biome:*)"
     ]
   }
 }
