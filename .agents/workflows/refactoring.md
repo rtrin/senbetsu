@@ -19,35 +19,25 @@ Keep the codebase clean and AI-friendly through periodic refactoring.
 
 ### 1. Analyze Codebase Health
 
-// turbo
-
 ```bash
 # Find long files
-find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.py" | \
-  xargs wc -l | sort -rn | head -20
+find . -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn | head -20
 ```
-
-// turbo
 
 ```bash
 # Run quality checks
-pre-commit run --all-files
+biome check .
 ```
 
 ### 2. Identify Refactoring Targets
 
-Ask Claude:
+Analyze the codebase for:
 
-```
-Analyze our codebase structure for:
 1. Files approaching 500 line limit
 2. Functions approaching 60 line limit
 3. Duplicate code that could be extracted
 4. Unclear file organization
 5. Missing or outdated documentation
-
-Suggest specific refactoring actions.
-```
 
 ### 3. Prioritize
 
@@ -89,27 +79,13 @@ Extract common code between [file1] and [file2]:
 
 ### 5. Verify
 
-// turbo
-
 ```bash
-npm test
-pre-commit run --all-files
+vitest run
+biome check .
+tsc --noEmit
 ```
 
-### 6. Reorganize Structure (If Needed)
-
-Ask Claude:
-
-```
-Suggest a better organization for our codebase.
-Consider: feature-based grouping, domain separation,
-dependency layers, and AI discoverability.
-
-Current structure:
-[list current directories]
-```
-
-### 7. Update Documentation
+### 6. Update Documentation
 
 - Update README if structure changed
 - Update any architecture docs

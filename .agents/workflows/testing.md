@@ -24,29 +24,15 @@ Identify what needs testing:
 - **Happy path**: Normal expected usage
 - **Edge cases**: Boundary conditions, empty inputs
 - **Error cases**: Invalid inputs, failures
-- **Integration points**: API calls, database operations
+- **Chrome API interactions**: Storage, messaging, tabs
 
-### 2. Set Up Test Environment
+### 2. Create Test File
 
-// turbo
+Place tests alongside or in `tests/`:
 
-Ensure test dependencies are installed:
+Naming convention: `[module].test.ts` or `[component].test.tsx`
 
-```bash
-npm test -- --version
-```
-
-### 3. Create Test File
-
-Place tests in appropriate location:
-
-- Unit tests: `tests/unit/` or `__tests__/`
-- Integration tests: `tests/integration/`
-- E2E tests: `tests/e2e/`
-
-Naming convention: `[component].test.ts` or `[component].spec.ts`
-
-### 4. Write Unit Tests
+### 3. Write Unit Tests
 
 Test individual functions in isolation:
 
@@ -71,72 +57,44 @@ describe('functionName', () => {
 });
 ```
 
-### 5. Write Integration Tests
-
-Test component interactions:
+### 4. Mock Chrome APIs
 
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Component } from '../components/Component';
-
-describe('Component', () => {
-  it('should render correctly', () => {
-    render(<Component />);
-    expect(screen.getByText('Expected Text')).toBeInTheDocument();
-  });
-
-  it('should handle user interaction', async () => {
-    render(<Component />);
-    fireEvent.click(screen.getByRole('button'));
-    expect(await screen.findByText('Result')).toBeInTheDocument();
-  });
+// Mock chrome.storage.local
+const mockStorage: Record<string, unknown> = {};
+vi.stubGlobal('chrome', {
+  storage: {
+    local: {
+      get: vi.fn((keys) => Promise.resolve(mockStorage)),
+      set: vi.fn((items) => {
+        Object.assign(mockStorage, items);
+        return Promise.resolve();
+      }),
+    },
+  },
 });
 ```
 
-### 6. Write E2E Tests
-
-Test complete user flows with Playwright:
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test('user can complete flow', async ({ page }) => {
-  await page.goto('/');
-
-  // Interact with page
-  await page.click('button[data-testid="start"]');
-  await page.fill('input[name="email"]', 'test@example.com');
-  await page.click('button[type="submit"]');
-
-  // Verify result
-  await expect(page.locator('.success-message')).toBeVisible();
-});
-```
-
-### 7. Run Tests
-
-// turbo
+### 5. Run Tests
 
 ```bash
 # Run all tests
-npm test
+vitest run
 
 # Run specific test file
-npm test -- path/to/test.test.ts
+vitest run path/to/test.test.ts
 
 # Run with coverage
-npm test -- --coverage
+vitest run --coverage
 
-# Run E2E tests
-npx playwright test
+# Watch mode during development
+vitest
 ```
 
-### 8. Check Coverage
-
-// turbo
+### 6. Check Coverage
 
 ```bash
-npm test -- --coverage
+vitest run --coverage
 ```
 
 Target coverage:
@@ -146,7 +104,7 @@ Target coverage:
 - Functions: > 80%
 - Lines: > 80%
 
-### 9. Fix Failing Tests
+### 7. Fix Failing Tests
 
 If tests fail:
 
@@ -180,34 +138,23 @@ it('should handle async operation', async () => {
 });
 ```
 
-### Snapshot Testing
+### Chrome Extension Testing
 
-```typescript
-it('should match snapshot', () => {
-  const { container } = render(<Component />);
-  expect(container).toMatchSnapshot();
-});
-```
+For testing that requires a real browser environment:
 
-### Testing Hooks
-
-```typescript
-import { renderHook } from '@testing-library/react';
-
-it('should return correct value', () => {
-  const { result } = renderHook(() => useCustomHook());
-  expect(result.current.value).toBe('expected');
-});
-```
+1. Build the extension: `wxt build`
+2. Load unpacked from `.output/chrome-mv3/` in `chrome://extensions`
+3. Test popup by clicking the extension icon
+4. Inspect service worker via extension details page
+5. Check console for errors in each context (popup, background, content)
 
 ---
 
 ## Checklist
 
 - [ ] Unit tests for new functions
-- [ ] Integration tests for component interactions
-- [ ] E2E tests for critical user flows
+- [ ] Chrome API mocks for extension-specific code
 - [ ] Edge cases covered
 - [ ] Error cases covered
-- [ ] Tests pass locally
+- [ ] Tests pass locally (`vitest run`)
 - [ ] Coverage meets targets

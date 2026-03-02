@@ -32,6 +32,54 @@
   color: var(--color-grey);
 }
 
+.popup-header__actions {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.popup-header__link {
+  font-size: 11px;
+  color: var(--color-grey);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.popup-header__link:hover {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+@media (prefers-color-scheme: light) {
+  .popup-header__link:hover {
+    color: #1a1a2e;
+  }
+}
+
+.popup-header__actions {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.popup-header__link {
+  font-size: 11px;
+  color: var(--color-grey);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.popup-header__link:hover {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+@media (prefers-color-scheme: light) {
+  .popup-header__link:hover {
+    color: #1a1a2e;
+  }
+}
+
 /* ─── Buttons ────────────────────────────────────────────────── */
 
 .save-group-container {
@@ -247,6 +295,18 @@
   color: var(--color-grey);
 }
 
+.tab-group__dot--dashed {
+  background-color: transparent !important;
+  border: 1.5px dashed var(--color-grey);
+}
+
+.ungrouped-action {
+  margin-left: auto;
+  margin-right: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
 /* ─── Close Buttons ─────────────────────────────────────────── */
 
 .close-btn {
@@ -348,9 +408,24 @@
   font-weight: 600;
 }
 
+.tab-item__badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-grey);
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 @media (prefers-color-scheme: light) {
   .tab-item-row:hover {
     background-color: rgba(0, 0, 0, 0.04);
+  }
+  .tab-item__badge {
+    background-color: rgba(0, 0, 0, 0.05);
   }
 }
 

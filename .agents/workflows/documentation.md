@@ -10,7 +10,6 @@ Keep project documentation comprehensive and up-to-date.
 
 - After completing a feature
 - When onboarding new contributors
-- During quarterly review
 - When explaining complex systems
 
 ---
@@ -19,13 +18,10 @@ Keep project documentation comprehensive and up-to-date.
 
 ### 1. Assess Current Documentation
 
-// turbo
-
 Review existing docs:
 
 ```bash
 ls -la docs/
-cat README.md
 ```
 
 ### 2. Update Code Documentation
@@ -57,14 +53,14 @@ For each modified file, ensure:
 **Types/Interfaces:**
 
 ```typescript
-/** Represents a user's learning resource */
-interface Resource {
+/** Represents a saved tab session */
+interface TabSession {
   /** Unique identifier */
   id: string;
   /** Display name shown in UI */
-  title: string;
-  /** Resource type (youtube, pdf, note, link) */
-  type: ResourceType;
+  name: string;
+  /** Tabs saved in this session */
+  tabs: SavedTab[];
 }
 ```
 
@@ -74,10 +70,9 @@ Ensure README includes:
 
 - [ ] Project description
 - [ ] Quick start instructions
-- [ ] Environment setup
-- [ ] Available scripts
+- [ ] How to load the extension
+- [ ] Available commands
 - [ ] Project structure overview
-- [ ] Contributing guidelines
 
 ### 4. Document Architecture
 
@@ -86,83 +81,26 @@ Create or update `docs/architecture.md`:
 ```markdown
 # Architecture Overview
 
-## System Diagram
+## Extension Contexts
 
-[Mermaid or ASCII diagram]
-
-## Key Components
-
-- **Component A**: Purpose and responsibility
-- **Component B**: Purpose and responsibility
+- **Popup**: React UI, user interactions
+- **Background**: Service worker, Chrome API orchestration
+- **Content Script**: Page interaction, data extraction
 
 ## Data Flow
 
-Describe how data moves through the system
+Describe how data moves between contexts
 
 ## External Dependencies
 
-List and explain third-party integrations
+List Chrome APIs and third-party integrations
 ```
 
-### 5. Document APIs
+### 5. Review Documentation
 
-For each API endpoint, document in `docs/api.md`:
-
-````markdown
-## POST /api/resource
-
-Create a new resource.
-
-**Request Body:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| title | string | Yes | Resource title |
-| url | string | No | External URL |
-
-**Response:**
-
-- 201: Resource created successfully
-- 400: Validation error
-- 401: Unauthorized
-
-**Example:**
-
-```json
-{
-  "title": "Spanish Podcast",
-  "type": "youtube",
-  "url": "https://..."
-}
-```
-````
-
-````
-
-### 6. Update Changelog
-
-Add entry to `CHANGELOG.md`:
-
-```markdown
-## [Unreleased]
-
-### Added
-- New feature description
-
-### Changed
-- Modified behavior description
-
-### Fixed
-- Bug fix description
-````
-
-### 7. Review Documentation
-
-// turbo
-
-Check for broken links and formatting:
+Check for broken links and stale content:
 
 ```bash
-# Find TODOs in documentation
 grep -rn "TODO\|FIXME\|TBD" docs/ README.md
 ```
 
@@ -170,21 +108,17 @@ grep -rn "TODO\|FIXME\|TBD" docs/ README.md
 
 ## Documentation Types Checklist
 
-- [ ] **README.md** - Project overview, quick start
-- [ ] **docs/architecture.md** - System design
-- [ ] **docs/api.md** - API reference
-- [ ] **docs/deployment.md** - Deployment instructions
-- [ ] **CHANGELOG.md** - Version history
-- [ ] **CONTRIBUTING.md** - Contribution guidelines
-- [ ] **Inline comments** - Complex code explanation
-- [ ] **JSDoc/TSDoc** - Function documentation
+- [ ] **README.md** — Project overview, quick start
+- [ ] **docs/architecture.md** — System design
+- [ ] **Inline comments** — Complex code explanation
+- [ ] **JSDoc/TSDoc** — Function documentation
+- [ ] **docs/plans/** — Feature plans and PRDs
 
 ---
 
 ## Best Practices
 
-1. **Write for your future self** - Assume no context
-2. **Keep it updated** - Stale docs are worse than no docs
-3. **Use examples** - Show, don't just tell
-4. **Link related docs** - Cross-reference appropriately
-5. **Version documentation** - Keep in sync with code
+1. **Write for your future self** — Assume no context
+2. **Keep it updated** — Stale docs are worse than no docs
+3. **Use examples** — Show, don't just tell
+4. **Link related docs** — Cross-reference appropriately

@@ -1,8 +1,8 @@
-import type { SavedSession } from '@/lib/types';
+import type { TabSession } from '@/lib/types';
 import { SessionCard } from './SessionCard';
 
 interface SessionHistoryProps {
-  sessions: SavedSession[];
+  sessions: TabSession[];
   onRestore: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
 }

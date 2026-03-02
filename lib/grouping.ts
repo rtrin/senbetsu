@@ -1,11 +1,11 @@
-import type { ClassificationResult, TabCategory } from './types';
+import type { ClassificationResult, TabCategory, TabGroupColor } from './types';
 import { getCategoryColor } from './utils';
 
 // windowId -> category -> groupId
-const activeGroups = new Map<number, Map<TabCategory, number>>();
+const trackedGroups = new Map<number, Map<TabCategory, number>>();
 
 // tabId -> category
-const tabCategories = new Map<number, TabCategory>();
+const tabCategoryCache = new Map<number, TabCategory>();
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,21 +16,23 @@ function delay(ms: number): Promise<void> {
  * Chrome has a known bug where tabGroups.update sets the title in the API
  * but the UI doesn't render it until the group is collapsed/uncollapsed.
  */
+// TODO: check this
 async function forceRenderTitle(
   groupId: number,
   title: string,
-  color: chrome.tabGroups.ColorEnum,
+  color: TabGroupColor,
 ): Promise<void> {
-  // Set title + collapse to force Chrome to render the title chip
-  await chrome.tabGroups.update(groupId, { title, color, collapsed: true });
+  const chromeColor = color as chrome.tabGroups.Color;
+
+  // Simple update — works on Chrome 146+
+  await chrome.tabGroups.update(groupId, { title, color: chromeColor });
   await delay(50);
-  // Uncollapse to show tabs again — title should now be visible
-  await chrome.tabGroups.update(groupId, { collapsed: false });
+  await chrome.tabGroups.update(groupId, { collapsed: true });
 }
 
 async function findOrCreateGroup(windowId: number, category: TabCategory): Promise<number | null> {
-  const windowGroups = activeGroups.get(windowId) ?? new Map();
-  activeGroups.set(windowId, windowGroups);
+  const windowGroups = trackedGroups.get(windowId) ?? new Map();
+  trackedGroups.set(windowId, windowGroups);
 
   const existingId = windowGroups.get(category);
 
@@ -59,10 +61,10 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
     }),
   );
 
-  const activeResults = tabEntries.filter((r): r is NonNullable<typeof r> => r !== null);
+  const validResults = tabEntries.filter((r): r is NonNullable<typeof r> => r !== null);
   const windowCategoryTabs = new Map<number, Map<TabCategory, [number, ...number[]]>>();
 
-  for (const { tabId, category, windowId } of activeResults) {
+  for (const { tabId, category, windowId } of validResults) {
     let categoryMap = windowCategoryTabs.get(windowId);
     if (!categoryMap) {
       categoryMap = new Map();
@@ -88,14 +90,14 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
           await chrome.tabs.group({ tabIds, groupId });
         } else {
           groupId = await chrome.tabs.group({ tabIds });
-          const windowGroups = activeGroups.get(windowId)!;
+          const windowGroups = trackedGroups.get(windowId)!;
           windowGroups.set(category, groupId);
         }
 
         await forceRenderTitle(groupId, category, color);
 
         for (const tabId of tabIds) {
-          tabCategories.set(tabId, category);
+          tabCategoryCache.set(tabId, category);
           console.log(`[senbetsu] Tab ${tabId} → "${category}" (group ${groupId})`);
         }
       } catch (e) {
@@ -106,9 +108,9 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
 }
 
 export function removeTab(tabId: number): void {
-  tabCategories.delete(tabId);
+  tabCategoryCache.delete(tabId);
 }
 
 export function cleanupWindow(windowId: number): void {
-  activeGroups.delete(windowId);
+  trackedGroups.delete(windowId);
 }

@@ -1,27 +1,31 @@
 # Gemini AI Guidelines
 
-> **Important**: Also read [AGENTS.md](./AGENTS.md) for general AI coding practices. This project follows strict guidelines located in `.antigravity/rules.md`.
+> **Important**: Also read [AGENTS.md](./AGENTS.md) for general AI coding practices.
 
-## Project Intelligence
+## Project
 
-### 🛠️ Workflows
+WXT Chrome extension with React 19, TypeScript strict mode, Biome (lint/format), Vitest (tests).
 
-Always refer to `.agents/workflows/` for structured task execution:
+AI-powered tab manager that groups browser tabs using Gemini, tracks memory usage, and saves/restores tab sessions.
+
+## Workflows
+
+Refer to `.agents/workflows/` for structured task execution:
 
 - `/code-review`: AI-assisted code review for PRs
 - `/debugging`: Systematic debugging using log-based feedback
 - `/documentation`: Maintain thorough project documentation
-- `/feature-development`: End-to-end feature development (research to deployment)
+- `/feature-development`: End-to-end feature development
 - `/refactoring`: Periodic codebase cleanup and reorganization
 - `/testing`: Write comprehensive tests for features
 
-### 🧠 Agent Skills
+## Skills
 
 Utilize specialized capabilities in `.agents/skills/`:
 
-- `browser-testing`: AI-driven browser testing using Playwright
+- `browser-testing`: Chrome extension testing (manual + Vitest)
 - `debugging`: Enhanced debugging loops and log analysis
-- `documentation-workflow`: standards for project documentation
+- `documentation-workflow`: Standards for project documentation
 - `multi-ai-orchestration`: Coordinating multiple models for complex tasks
 - `prd-workflow`: PRD creation and cross-validation
 - `research-best-practices`: Pre-implementation research discovery
@@ -30,21 +34,21 @@ Utilize specialized capabilities in `.agents/skills/`:
 
 ### Context Window
 
-- Gemini has a large context window—use it to understand full files
+- Gemini has a large context window — use it to understand full files
 - Prefer viewing entire files over partial snippets when debugging
 
 ### Code Generation
 
-- **Complete Blocks**: Generate complete, working code within imports
-- **TS Standards**: Use strict types, avoid `any`, and define interfaces
-- **File Size**: Target < 400 lines (Max 500); Target < 50 lines per function (Max 60)
+- **Complete Blocks**: Generate complete, working code with imports
+- **TS Standards**: Use strict types, avoid `any`, define interfaces
+- **File Size**: Target < 400 lines (max 500); target < 50 lines per function (max 60)
 - **Patterns**: Follow existing patterns; split large files into domain-modules
 
 ### Tool Usage
 
 - Use `view_file` to understand context before editing
 - Use `grep_search` to find related code across the project
-- **Verification**: Run `npm run lint` and verify no regressions after ANY edit
+- **Verification**: Run `biome check .` and verify no regressions after ANY edit
 
 ### API Integration (Gemini SDK)
 
@@ -54,16 +58,23 @@ This project uses `@google/genai` for AI features:
 import { GoogleGenAI } from '@google/genai';
 
 const client = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_API_KEY,
-  httpOptions: {
-    headers: { Referer: process.env.NEXT_PUBLIC_APP_URL },
-  },
+  apiKey: import.meta.env.WXT_GOOGLE_API_KEY,
 });
+```
+
+### Commands
+
+```bash
+wxt                   # Dev server (loads extension in Chrome)
+wxt build             # Production build
+biome check .         # Lint + format check
+vitest run            # Run tests
+tsc --noEmit          # Type check
 ```
 
 ### Common Tasks
 
 1. **Before editing**: Check file structure, workflows, and related files
-2. **After editing**: Run lint, test, and commit atomically
+2. **After editing**: Run `biome check .`, test, and commit atomically
 3. **Code Review**: Run `/code-review` workflow for new features
 4. **For features**: Refer to `docs/prds/` and `/feature-development` workflow

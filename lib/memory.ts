@@ -1,7 +1,7 @@
 import type { TabMemoryInfo } from './types';
 import { isClassifiableUrl } from './utils';
 
-export async function scrapeTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemoryInfo[]> {
+export async function measureTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemoryInfo[]> {
   const classifiable = tabs.filter(
     (t) => t.id !== undefined && !t.discarded && isClassifiableUrl(t.url),
   );

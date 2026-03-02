@@ -1,4 +1,5 @@
 import {
+  handleClassifyUnsorted,
   handleCloseGroup,
   handleCloseTab,
   handleDeleteSession,
@@ -43,6 +44,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_GET_MEMORY_USAGE':
           responsePromise = handleGetMemoryUsage();
+          break;
+        case 'CMD_CLASSIFY_UNSORTED':
+          responsePromise = handleClassifyUnsorted(message.tabIds);
           break;
         default: {
           const _exhaustive: never = message;

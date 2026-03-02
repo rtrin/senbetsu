@@ -19,18 +19,18 @@ export interface AppSettings {
   hasSeenOnboarding: boolean;
 }
 
-export interface SavedTab {
+export interface TabSnapshot {
   url: string;
   title: string;
   favicon: string;
   category: TabCategory;
 }
 
-export interface SavedSession {
+export interface TabSession {
   id: string;
   savedAt: number;
   label: string;
-  tabs: SavedTab[];
+  tabs: TabSnapshot[];
 }
 
 // ─── Popup Commands ─────────────────────────────────────────────
@@ -85,6 +85,11 @@ export interface CmdGetMemoryUsage {
   type: 'CMD_GET_MEMORY_USAGE';
 }
 
+export interface CmdClassifyUnsorted {
+  type: 'CMD_CLASSIFY_UNSORTED';
+  tabIds: number[];
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdRestoreSession
@@ -93,19 +98,20 @@ export type PopupCommand =
   | CmdCloseTab
   | CmdCloseGroup
   | CmdDismissOnboarding
-  | CmdGetMemoryUsage;
+  | CmdGetMemoryUsage
+  | CmdClassifyUnsorted;
 
 export interface CommandResponse {
   ok: boolean;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export type ExtensionMessage = PopupCommand;
 
 // ─── Classification ──────────────────────────────────────────────
 
-export interface TabInfo {
+export interface TabClassificationInput {
   tabId: number;
   url: string;
   title: string;
@@ -117,7 +123,7 @@ export interface ClassificationResult {
   category: TabCategory;
 }
 
-export interface BatchClassificationResponse {
+export interface AIGroupingResponse {
   groups: Array<{
     name: string;
     tabIds: number[];

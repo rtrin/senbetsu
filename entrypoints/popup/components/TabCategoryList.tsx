@@ -1,15 +1,15 @@
-import type { SavedSession, TabCategory } from '@/lib/types';
+import type { TabCategory, TabSession } from '@/lib/types';
 import { getCategoryColor } from '@/lib/utils';
 
 interface TabCategoryListProps {
   tabs: chrome.tabs.Tab[];
-  latestSession: SavedSession | null;
+  latestSession: TabSession | null;
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
   onCloseGroup: (tabIds: number[]) => void;
 }
 
-interface CategorizedTab {
+interface ClassifiedTab {
   tabId: number;
   url: string;
   title: string;
@@ -36,7 +36,7 @@ export function TabCategoryList({
   const urlToCategory = new Map(latestSession.tabs.map((t) => [t.url, t.category]));
 
   // Match live tabs to their categories
-  const categorized: CategorizedTab[] = tabs
+  const categorized: ClassifiedTab[] = tabs
     .filter((t) => t.id && t.url && urlToCategory.has(t.url))
     .map((t) => ({
       tabId: t.id!,
@@ -50,7 +50,7 @@ export function TabCategoryList({
   if (categorized.length === 0) return null;
 
   // Group by category
-  const grouped = new Map<TabCategory, CategorizedTab[]>();
+  const grouped = new Map<TabCategory, ClassifiedTab[]>();
   for (const tab of categorized) {
     const existing = grouped.get(tab.category) ?? [];
     existing.push(tab);

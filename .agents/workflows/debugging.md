@@ -27,12 +27,9 @@ Clearly state:
 
 ### 2. Add Strategic Logs
 
-// turbo
-
 Add console.log statements at key points:
 
 ```bash
-# Find the relevant file
 grep -rn "function_name" --include="*.ts" --include="*.tsx" .
 ```
 
@@ -52,17 +49,26 @@ console.log('[DEBUG] FunctionName - description:', { varName: value });
 
 ### 3. Reproduce the Issue
 
-// turbo
-
 Run the scenario that triggers the bug:
 
 ```bash
-npm run dev
-# OR
-npm test -- --grep "test name"
+# For unit tests
+vitest run -- --grep "test name"
+
+# For extension testing
+wxt
+# Then test in browser
 ```
 
-### 4. Analyze Log Output
+### 4. Check the Right Console
+
+Chrome extension has multiple JavaScript contexts:
+
+- **Popup console**: Right-click popup → Inspect
+- **Service worker console**: `chrome://extensions` → extension details → Inspect views: service worker
+- **Content script console**: Page's DevTools console (filter by extension)
+
+### 5. Analyze Log Output
 
 Look for:
 
@@ -71,14 +77,14 @@ Look for:
 - Wrong execution order
 - Failed conditions
 
-### 5. Form Hypothesis
+### 6. Form Hypothesis
 
 Based on logs, state:
 
 - What you think is wrong
 - What specific change should fix it
 
-### 6. Make Minimal Fix
+### 7. Make Minimal Fix
 
 Change only what's needed to test the hypothesis:
 
@@ -86,16 +92,14 @@ Change only what's needed to test the hypothesis:
 - Don't refactor while debugging
 - Keep original code commented for reference
 
-### 7. Verify Fix
-
-// turbo
+### 8. Verify Fix
 
 ```bash
-npm test
-npm run build
+vitest run
+biome check .
 ```
 
-### 8. Clean Up
+### 9. Clean Up
 
 - Remove debug console.logs
 - Uncomment/restore any temporary changes
@@ -128,12 +132,12 @@ setState(newValue);
 console.log('[DEBUG] Set called with:', newValue);
 ```
 
-### API Failures
+### Chrome API Failures
 
 ```typescript
-console.log('[DEBUG] Request:', { url, body });
-const response = await fetch(url, { body });
-console.log('[DEBUG] Response:', response.status, await response.text());
+console.log('[DEBUG] Calling chrome.storage.local.get');
+const result = await chrome.storage.local.get('key');
+console.log('[DEBUG] Storage result:', result);
 ```
 
 ---
@@ -143,6 +147,6 @@ console.log('[DEBUG] Response:', response.status, await response.text());
 If after 3 debugging cycles the issue persists:
 
 1. **Document findings** in a debug log file
-2. **Minimal reproduction** - create smallest case that fails
+2. **Minimal reproduction** — create smallest case that fails
 3. **Search** for similar issues online
 4. **Ask for help** with full context

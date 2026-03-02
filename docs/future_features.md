@@ -1,8 +1,22 @@
 * auto-grouping: automatically classify and group new tabs as they open (removed from MVP, re-add later with debounce queue + content script metadata extraction)
 * close tabs when they reach a certain memory threshold
-* button to set reminders for unused tabs
+    
+* landing page (like this: https://hanashiapp.com/#download)
+* create agentic workflow with trees (https://medium.com/@thelazyindiantechie/ mthe-ultimate-agentic-prompt-engineering-workflow-5f3c51d958e0)
+* rename groups in extension
+* store current tabs in folder
 * check folders that haven't been opened in a while
-* scrape site for more context -> better sorting
+* read user's bookmarks/folders and create groups for them
+  * user clicks on their folder, opens in a new window into groups
+* unused tabs (remind user to close them)
+
 
 ## Doing:
-* check memory usage (check top tabs using memory)
+* reload button near open tabs header similar to memory tab (update current state of tabs/groups)
+
+### Ghostty
+* drag and drop tabs to move them between groups
+
+### terminals in IDE
+* implement subscriptions/payment/auth?
+

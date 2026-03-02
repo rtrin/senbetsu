@@ -1,7 +1,7 @@
-import type { SavedSession } from '@/lib/types';
+import type { TabSession } from '@/lib/types';
 
 interface SessionCardProps {
-  session: SavedSession;
+  session: TabSession;
   onRestore: () => void;
   onDelete: () => void;
 }

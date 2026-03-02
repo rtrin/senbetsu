@@ -1,140 +1,89 @@
 ---
 name: browser-testing
-description: AI-driven browser testing using Playwright and screenshots
+description: Chrome extension testing approach using manual testing and Vitest
 ---
 
-# Browser Testing
+# Chrome Extension Testing
 
-Use browser automation to test UI like a real user. Inspired by Vercel's browser-agent pattern.
+Test the extension through a combination of unit tests (Vitest) and manual browser testing.
 
-## Setup
+## Unit Testing (Vitest)
 
-### Install Playwright
+Test business logic in `lib/` with Vitest:
 
 ```bash
-npm install -D @playwright/test
-npx playwright install
+vitest run                    # Run all tests
+vitest run path/to/test.ts    # Run specific test
+vitest run --coverage         # With coverage
 ```
 
-### Configure
-
-Create `playwright.config.ts`:
+### Mock Chrome APIs
 
 ```typescript
-import { defineConfig } from '@playwright/test';
+import { describe, it, expect, vi } from 'vitest';
 
-export default defineConfig({
-  testDir: './tests/e2e',
-  use: {
-    baseURL: 'http://localhost:3000',
-    screenshot: 'on',
-    video: 'retain-on-failure',
+vi.stubGlobal('chrome', {
+  storage: {
+    local: {
+      get: vi.fn().mockResolvedValue({}),
+      set: vi.fn().mockResolvedValue(undefined),
+    },
   },
-  webServer: {
-    command: 'npm run dev',
-    port: 3000,
-    reuseExistingServer: true,
+  tabs: {
+    query: vi.fn().mockResolvedValue([]),
   },
 });
 ```
 
-## Workflow
+## Manual Browser Testing
 
-### Step 1: Write E2E Tests
+### Load the Extension
 
-Create tests in `tests/e2e/[feature].spec.ts`:
+1. Run `wxt` for dev mode (auto-reloads on changes)
+2. Or build and load manually:
+   ```bash
+   wxt build
+   ```
+3. Go to `chrome://extensions`
+4. Enable "Developer mode"
+5. Click "Load unpacked" → select `.output/chrome-mv3/`
 
-```typescript
-import { test, expect } from '@playwright/test';
+### Test the Popup
 
-test('user can complete [action]', async ({ page }) => {
-  await page.goto('/');
+1. Click the extension icon in the toolbar
+2. Verify UI renders correctly
+3. Test all interactive elements
+4. Check for console errors (right-click popup → Inspect)
 
-  // Take screenshot for AI review
-  await page.screenshot({ path: 'tests/screenshots/step1.png' });
+### Test the Service Worker
 
-  // Interact like a user
-  await page.click('[data-testid="submit-button"]');
+1. Go to `chrome://extensions`
+2. Find the extension → click "Inspect views: service worker"
+3. Check console for errors
+4. Test background functionality (alarms, messages, etc.)
 
-  // Assert expected outcome
-  await expect(page.locator('.success-message')).toBeVisible();
+### Test Content Scripts
 
-  // Final screenshot
-  await page.screenshot({ path: 'tests/screenshots/final.png' });
-});
-```
+1. Navigate to a page where content script runs
+2. Open DevTools console
+3. Filter by extension name
+4. Check for injected elements or behaviors
 
-### Step 2: Run Tests
+## Testing Checklist
 
-```bash
-npx playwright test
-```
-
-### Step 3: AI Screenshot Review
-
-After tests run, have AI review screenshots:
-
-```
-Review these UI screenshots for:
-1. Visual bugs or inconsistencies
-2. UX issues (confusing layout, missing feedback)
-3. Accessibility problems
-4. Mobile responsiveness
-
-Screenshots: [describe or attach]
-```
-
-## AI-Driven Testing Pattern
-
-For Claude Code to test its own creations:
-
-### 1. Implement Feature
-
-```
-Implement [feature] in [file]
-```
-
-### 2. Write Test
-
-```
-Write a Playwright E2E test for the feature you just implemented.
-Save to tests/e2e/[feature].spec.ts
-```
-
-### 3. Run and Screenshot
-
-```bash
-npx playwright test --update-snapshots
-```
-
-### 4. Review Results
-
-```
-Run the E2E tests and review any failures.
-Check screenshots in tests/screenshots/
-Fix any issues found.
-```
-
-## Browser Subagent Pattern
-
-For more complex testing, use the browser_subagent tool:
-
-```
-Task: Navigate to http://localhost:3000, log in with test credentials,
-and verify the dashboard loads correctly. Take screenshots at each step.
-Return: Success/failure status and any visual issues found.
-```
+- [ ] Unit tests pass (`vitest run`)
+- [ ] Extension loads without errors
+- [ ] Popup opens and renders correctly
+- [ ] Service worker starts without errors
+- [ ] Content scripts inject properly (if applicable)
+- [ ] Chrome storage reads/writes work
+- [ ] Tab operations work as expected
+- [ ] Error states are handled gracefully
+- [ ] Extension works after browser restart
 
 ## Tips
 
-- **Unique IDs**: Add `data-testid` attributes to interactive elements
-- **Stable selectors**: Prefer data-testid over CSS classes
-- **Screenshot naming**: Use descriptive names like `checkout-step2-payment.png`
-- **CI Integration**: Run on every PR to catch regressions
-
-## Integration
-
-Used in:
-
-- `/feature-development` workflow (step 7: testing)
-- Pre-merge CI checks
+- **Dev mode**: `wxt` auto-reloads the extension on file changes
+- **Stable selectors**: Add `data-testid` attributes for UI testing
+- **Multiple tabs**: Test with various numbers of tabs open
+- **Permissions**: Test with and without optional permissions granted

@@ -1,69 +1,61 @@
-# Claude AI Guidelines
+# Senbetsu — Claude Code Guidelines
 
-> **Important**: Also read [AGENTS.md](./AGENTS.md) for general AI coding practices.
+> Also read [AGENTS.md](./AGENTS.md) for general AI coding practices.
 
-## Claude-Specific Notes
+## Project
 
-### Thinking Process
+WXT Chrome extension with React 19, TypeScript strict mode, Biome (lint/format), Vitest (tests).
 
-- Think step-by-step before making changes
-- Explain reasoning when making non-obvious decisions
-- Ask clarifying questions rather than assuming
+AI-powered tab manager that groups browser tabs using Gemini, tracks memory usage, and saves/restores tab sessions.
 
-### Code Modifications
+## Commands
 
-- Make minimal, targeted changes
-- Preserve existing code style and patterns
-- Test changes before considering complete
+```bash
+wxt                   # Dev server (loads extension in Chrome)
+wxt build             # Production build
+biome check .         # Lint + format check
+biome check --write . # Lint + format with auto-fix
+vitest run            # Run tests
+tsc --noEmit          # Type check
+```
 
-### Communication Style
+## Structure
 
-- Be concise and direct
-- Use markdown formatting for clarity
-- Provide code snippets in fenced blocks
+```
+entrypoints/popup/          # React popup UI (components, hooks, CSS)
+entrypoints/background.ts   # Service worker (no DOM access)
+entrypoints/content.ts      # Content script (injected into pages)
+lib/                        # Shared utils (ai, storage, grouping, types)
+docs/                       # Plans, PRDs, future features
+public/                     # Static assets (icons, images)
+```
 
-### Project Context
+## Key Files
 
-- This is a Next.js 15 App Router project
-- Uses TypeScript strict mode
-- Supabase for database
-- Tailwind CSS for styling
-- `@stackframe/stack` for authentication
+- `lib/types.ts` — shared TypeScript types
+- `lib/ai.ts` — Gemini AI integration for tab grouping
+- `lib/storage.ts` — chrome.storage wrapper
+- `lib/grouping.ts` — tab categorization logic
+- `lib/memory.ts` — tab memory usage tracking
+- `lib/commands.ts` — keyboard shortcut commands
+- `entrypoints/popup/App.tsx` — main popup component
+- `entrypoints/background.ts` — service worker entry point
+- `wxt.config.ts` — WXT/extension configuration
 
-### Tool Usage
+## Code Style
 
-- Use `view_file` to understand context before editing
-- Use `grep_search` to find related code across the project
-- Run `npm run lint` after making changes
+- 2-space indent, single quotes, trailing commas (enforced by Biome)
+- Functional style, no classes
+- Interfaces for props and data structures in `lib/types.ts`
+- Keep files under 500 lines, functions under 60 lines
 
-### Workflow Patterns
+## Workflow
 
-- Read `.agents/workflows/` for project-specific workflows
-- Follow `/refactoring` workflow for cleanup tasks
-- Use `/debugging` workflow when stuck
+- Plan with Opus before non-trivial work
+- Atomic commits — one logical change per commit
+- Run `biome check .` and `vitest run` before committing
+- Use `/compact` between unrelated tasks
 
-### Key Files to Know
+## Mistakes Log
 
-- `lib/actions/` - Server actions by domain
-- `lib/types.ts` - Shared TypeScript types
-- `components/` - React components
-- `.agents/workflows/` - Automation workflows
-
-### Before Making Changes
-
-1. Understand the current implementation
-2. Check for related code that might be affected
-3. Follow existing patterns in the codebase
-
-### After Making Changes
-
-1. Run `npm run lint`
-2. Verify the change works as expected
-3. Document any non-obvious decisions
-
-### Pre-Merge Checklist
-
-> **⚠️ MANDATORY**: Every PR with new features must pass this checklist.
-
-1. **Code Review**: Run `/code-review` workflow for new features
-2. **Lint/Test**: `npm run lint` && `npm test`
+<!-- Add mistakes here as they happen, so Claude doesn't repeat them -->

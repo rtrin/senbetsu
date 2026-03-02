@@ -2,7 +2,7 @@
 trigger: always_on
 ---
 
-Read CLAUDE.md or GEMINI.md depending on model, always read AGENTS.md
+Read CLAUDE.md and AGENTS.md. Read `.claude/rules/` for path-scoped rules.
 
 ## Code Review (MANDATORY)
 

@@ -1,10 +1,10 @@
 import { OPENAI_API_KEY, OPENAI_MODEL } from './constants';
 import type {
-  BatchClassificationResponse,
+  AIGroupingResponse,
   ClassificationResult,
   OpenAIChatRequest,
   OpenAIChatResponse,
-  TabInfo,
+  TabClassificationInput,
 } from './types';
 
 function getSystemPrompt(userPrompt?: string): string {
@@ -30,7 +30,7 @@ Respond strictly in JSON format:
 
 const MAX_CONTENT_CHARS = 60_000;
 
-function buildTabList(tabs: TabInfo[]): string {
+function buildTabList(tabs: TabClassificationInput[]): string {
   let totalContent = 0;
   return tabs
     .map((t) => {
@@ -47,7 +47,7 @@ function buildTabList(tabs: TabInfo[]): string {
 }
 
 export async function classifyTabs(
-  tabs: TabInfo[],
+  tabs: TabClassificationInput[],
   userPrompt?: string,
 ): Promise<ClassificationResult[]> {
   if (tabs.length === 0) return [];
@@ -83,7 +83,7 @@ export async function classifyTabs(
     throw new Error('Empty response from OpenAI');
   }
 
-  let parsed: BatchClassificationResponse;
+  let parsed: AIGroupingResponse;
   try {
     parsed = JSON.parse(content);
   } catch {

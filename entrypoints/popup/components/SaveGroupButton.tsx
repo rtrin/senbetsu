@@ -2,11 +2,11 @@ import type React from 'react';
 import { useState } from 'react';
 
 interface SaveGroupButtonProps {
-  isWorking: boolean;
+  isClassifying: boolean;
   onSave: (prompt?: string) => void;
 }
 
-export function SaveGroupButton({ isWorking, onSave }: SaveGroupButtonProps) {
+export function SaveGroupButton({ isClassifying, onSave }: SaveGroupButtonProps) {
   const [prompt, setPrompt] = useState('');
 
   const handleSave = () => {
@@ -15,7 +15,7 @@ export function SaveGroupButton({ isWorking, onSave }: SaveGroupButtonProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isWorking) {
+    if (e.key === 'Enter' && !isClassifying) {
       handleSave();
     }
   };
@@ -29,11 +29,16 @@ export function SaveGroupButton({ isWorking, onSave }: SaveGroupButtonProps) {
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={handleKeyDown}
-        disabled={isWorking}
+        disabled={isClassifying}
         maxLength={100}
       />
-      <button type="button" className="btn btn--primary" onClick={handleSave} disabled={isWorking}>
-        {isWorking ? 'Organizing Tabs...' : 'Save & Group Tabs'}
+      <button
+        type="button"
+        className="btn btn--primary"
+        onClick={handleSave}
+        disabled={isClassifying}
+      >
+        {isClassifying ? 'Organizing Tabs...' : 'Save & Group Tabs'}
       </button>
     </div>
   );

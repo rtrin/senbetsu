@@ -22,11 +22,13 @@ export function useCurrentTabs(): chrome.tabs.Tab[] {
     chrome.tabs.onUpdated.addListener(onUpdated);
     chrome.tabs.onRemoved.addListener(refresh);
     chrome.tabs.onActivated.addListener(refresh);
+    chrome.tabs.onCreated.addListener(refresh);
 
     return () => {
       chrome.tabs.onUpdated.removeListener(onUpdated);
       chrome.tabs.onRemoved.removeListener(refresh);
       chrome.tabs.onActivated.removeListener(refresh);
+      chrome.tabs.onCreated.removeListener(refresh);
     };
   }, []);
 
