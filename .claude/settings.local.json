@@ -25,7 +25,9 @@
       "Bash(bunx biome:*)",
       "WebSearch",
       "WebFetch(domain:developer.chrome.com)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npx biome:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

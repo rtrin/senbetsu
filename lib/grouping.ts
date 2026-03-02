@@ -7,10 +7,6 @@ const trackedGroups = new Map<number, Map<TabCategory, number>>();
 // tabId -> category
 const tabCategoryCache = new Map<number, TabCategory>();
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 /**
  * Force Chrome to render the group title by toggling collapsed state.
  * Chrome has a known bug where tabGroups.update sets the title in the API
@@ -26,8 +22,6 @@ async function forceRenderTitle(
 
   // Simple update — works on Chrome 146+
   await chrome.tabGroups.update(groupId, { title, color: chromeColor });
-  await delay(50);
-  await chrome.tabGroups.update(groupId, { collapsed: true });
 }
 
 async function findOrCreateGroup(windowId: number, category: TabCategory): Promise<number | null> {
@@ -49,6 +43,23 @@ async function findOrCreateGroup(windowId: number, category: TabCategory): Promi
 }
 
 export async function applyClassifications(results: ClassificationResult[]): Promise<void> {
+  // Bootstrap trackedGroups from live Chrome tab groups
+  try {
+    const existingTabGroups = await chrome.tabGroups.query({});
+    for (const group of existingTabGroups) {
+      if (group.title) {
+        let windowGroups = trackedGroups.get(group.windowId);
+        if (!windowGroups) {
+          windowGroups = new Map();
+          trackedGroups.set(group.windowId, windowGroups);
+        }
+        windowGroups.set(group.title as TabCategory, group.id);
+      }
+    }
+  } catch (e) {
+    console.warn('[senbetsu] Failed to bootstrap existing tab groups:', e);
+  }
+
   const tabEntries = await Promise.all(
     results.map(async (r) => {
       try {

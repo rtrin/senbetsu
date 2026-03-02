@@ -82,7 +82,7 @@
 
 /* ─── Buttons ────────────────────────────────────────────────── */
 
-.save-group-container {
+.save-group-form {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -175,26 +175,6 @@
   .btn--ghost:hover:not(:disabled) {
     color: #1a1a2e;
   }
-}
-
-/* ─── Onboarding Banner ──────────────────────────────────────── */
-
-.onboarding-banner {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.onboarding-banner__text {
-  font-size: 13px;
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.onboarding-banner__actions {
-  display: flex;
-  gap: 8px;
 }
 
 /* ─── Toggle ─────────────────────────────────────────────────── */

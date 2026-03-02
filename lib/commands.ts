@@ -5,19 +5,25 @@ import type { CommandResponse, TabClassificationInput, TabSession, TabSnapshot }
 import { isClassifiableUrl } from './utils';
 
 const BODY_TEXT_LIMIT = 500;
+const SCRAPE_TIMEOUT_MS = 2000;
 
 async function extractTabBodyText(tabId: number): Promise<string> {
   try {
-    const results = await chrome.scripting.executeScript({
+    const scrapePromise = chrome.scripting.executeScript({
       target: { tabId },
       func: (limit: number) => {
         return (document.body?.innerText ?? '').slice(0, limit);
       },
       args: [BODY_TEXT_LIMIT],
     });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('scrape timeout')), SCRAPE_TIMEOUT_MS),
+    );
+
+    const results = await Promise.race([scrapePromise, timeoutPromise]);
     return results[0]?.result ?? '';
   } catch {
-    // Tab may be a chrome:// page or otherwise restricted
     return '';
   }
 }
@@ -27,7 +33,6 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
     const tabs = await chrome.tabs.query({ currentWindow: true });
     const classifiable = tabs.filter((t) => t.id !== undefined && isClassifiableUrl(t.url));
 
-    // Scrape page content in batches to avoid IPC saturation
     const tabInputs: TabClassificationInput[] = [];
     const SCRAPE_BATCH_SIZE = 10;
     for (let i = 0; i < classifiable.length; i += SCRAPE_BATCH_SIZE) {
@@ -42,7 +47,6 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
       );
       tabInputs.push(...infos);
     }
-
     const results = await classifyTabs(tabInputs, userPrompt);
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
@@ -50,7 +54,6 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
 
     await applyClassifications(results);
 
-    // Build session snapshot
     const categoryMap = new Map(results.map((r) => [r.tabId, r.category]));
     const tabSnapshots: TabSnapshot[] = classifiable.map((t) => ({
       url: t.url!,
@@ -74,7 +77,6 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
     };
 
     await storage.saveSession(session);
-    await storage.updateSettings({ hasSeenOnboarding: true });
 
     return { ok: true };
   } catch (e) {
@@ -92,7 +94,7 @@ export async function handleClassifyUnsorted(
     );
 
     if (tabsToProcess.length === 0) {
-      return { ok: true }; // Nothing to do, but not an error
+      return { ok: true };
     }
 
     const tabInputs: TabClassificationInput[] = [];
@@ -110,7 +112,11 @@ export async function handleClassifyUnsorted(
       tabInputs.push(...infos);
     }
 
-    const results = await classifyTabs(tabInputs);
+    const sessions = await storage.getSessions();
+    const existingGroups =
+      sessions.length > 0 ? Array.from(new Set(sessions[0].tabs.map((t) => t.category))) : [];
+
+    const results = await classifyTabs(tabInputs, undefined, existingGroups);
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
     }
@@ -198,15 +204,6 @@ export async function handleDeleteSession(sessionId: string): Promise<CommandRes
   }
 }
 
-export async function handleDismissOnboarding(): Promise<CommandResponse> {
-  try {
-    await storage.updateSettings({ hasSeenOnboarding: true });
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
 import { measureTabMemory } from './memory';
 
 export async function handleGetMemoryUsage(): Promise<CommandResponse> {
@@ -214,10 +211,9 @@ export async function handleGetMemoryUsage(): Promise<CommandResponse> {
     const tabs = await chrome.tabs.query({ currentWindow: true });
     const memoryInfos = await measureTabMemory(tabs);
 
-    // Optionally fetch categories from the latest session to attach to results
     const sessions = await storage.getSessions();
     if (sessions.length > 0) {
-      const latestSession = sessions[0]; // Sessions are prepended, so index 0 is newest
+      const latestSession = sessions[0];
       const urlToCategory = new Map(latestSession.tabs.map((t) => [t.url, t.category]));
       for (const info of memoryInfos) {
         if (urlToCategory.has(info.url)) {

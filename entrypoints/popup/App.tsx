@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { storage } from '@/lib/storage';
-import type { AppSettings, CommandResponse, PopupCommand, TabSession } from '@/lib/types';
+import type { CommandResponse, PopupCommand, TabSession } from '@/lib/types';
 import './App.css';
 
 import type { TabMemoryInfo } from '@/lib/types';
 import { Header } from './components/Header';
 import { MemoryUsageList } from './components/MemoryUsageList';
-import { OnboardingBanner } from './components/OnboardingBanner';
 import { SaveGroupButton } from './components/SaveGroupButton';
 import { SessionHistory } from './components/SessionHistory';
 import { TabCategoryList } from './components/TabCategoryList';
@@ -19,29 +18,20 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 }
 
 function App() {
-  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [sessions, setSessions] = useState<TabSession[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [isGrouping, setIsGrouping] = useState(false);
   const [activeView, setActiveView] = useState<'groups' | 'memory'>('groups');
   const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
   const [isFetchingMemory, setIsFetchingMemory] = useState(false);
-  const liveTabs = useCurrentTabs();
+  const { tabs: liveTabs, refresh: refreshTabs } = useCurrentTabs();
 
-  // Load initial data
   useEffect(() => {
-    Promise.all([storage.getSettings(), storage.getSessions()]).then(([s, sess]) => {
-      setSettings(s);
-      setSessions(sess);
-    });
+    storage.getSessions().then(setSessions);
   }, []);
 
-  // Listen for storage changes from background
   useEffect(() => {
     const handler = (changes: Record<string, chrome.storage.StorageChange>) => {
-      if (changes[STORAGE_KEYS.settings]) {
-        setSettings(changes[STORAGE_KEYS.settings].newValue as AppSettings);
-      }
       if (changes[STORAGE_KEYS.sessions]) {
         setSessions(changes[STORAGE_KEYS.sessions].newValue as TabSession[]);
       }
@@ -118,27 +108,11 @@ function App() {
     sendCommand({ type: 'CMD_DELETE_SESSION', sessionId });
   }, []);
 
-  const handleDismissOnboarding = useCallback(() => {
-    setSettings((prev) => (prev ? { ...prev, hasSeenOnboarding: true } : prev));
-    sendCommand({ type: 'CMD_DISMISS_ONBOARDING' });
-  }, []);
-
-  if (!settings) return <div className="popup-loading">Loading…</div>;
-
-  const webTabs = liveTabs.filter((t) => t.url?.startsWith('http'));
   const latestSession = sessions.length > 0 ? sessions[0] : null;
 
   return (
     <div className="popup">
       <Header tabCount={liveTabs.length} />
-
-      {!settings.hasSeenOnboarding && webTabs.length > 0 && (
-        <OnboardingBanner
-          tabCount={webTabs.length}
-          onAccept={() => handleSaveAndGroup()}
-          onDismiss={handleDismissOnboarding}
-        />
-      )}
 
       <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
 
@@ -167,6 +141,7 @@ function App() {
             onSwitchTab={handleSwitchTab}
             onCloseTab={handleCloseTab}
             onCloseGroup={handleCloseGroup}
+            onRefresh={refreshTabs}
           />
           <UnsortedTabs
             tabs={liveTabs}

@@ -7,6 +7,7 @@ interface TabCategoryListProps {
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
   onCloseGroup: (tabIds: number[]) => void;
+  onRefresh: () => void;
 }
 
 interface ClassifiedTab {
@@ -29,8 +30,66 @@ export function TabCategoryList({
   onSwitchTab,
   onCloseTab,
   onCloseGroup,
+  onRefresh,
 }: TabCategoryListProps) {
-  if (!latestSession) return null;
+  // When no session exists yet, show all tabs in a flat list
+  if (!latestSession) {
+    const allTabs = tabs
+      .filter((t) => t.id && t.url)
+      .map((t) => ({
+        tabId: t.id!,
+        url: t.url!,
+        title: t.title ?? t.url!,
+        favIconUrl: t.favIconUrl ?? '',
+        isActive: t.active ?? false,
+      }));
+
+    if (allTabs.length === 0) return null;
+
+    return (
+      <section>
+        <div className="section-header">
+          <h2 className="section-title">Open Tabs</h2>
+          <button type="button" className="refresh-btn" onClick={onRefresh} title="Refresh tabs">
+            ↻
+          </button>
+        </div>
+        <div className="tab-group">
+          {allTabs.map((tab) => (
+            <div key={tab.tabId} className="tab-item-row">
+              <button
+                type="button"
+                className={`tab-item ${tab.isActive ? 'tab-item--active' : ''}`}
+                onClick={() => onSwitchTab(tab.tabId)}
+                title={tab.url}
+              >
+                {tab.favIconUrl ? (
+                  <img
+                    className="tab-item__favicon"
+                    src={tab.favIconUrl}
+                    alt=""
+                    width={16}
+                    height={16}
+                  />
+                ) : (
+                  <span className="tab-item__favicon-fallback" />
+                )}
+                <span className="tab-item__title">{tab.title}</span>
+              </button>
+              <button
+                type="button"
+                className="close-btn close-btn--tab"
+                onClick={() => onCloseTab(tab.tabId)}
+                title="Close tab"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   // Build a URL → category map from the latest session
   const urlToCategory = new Map(latestSession.tabs.map((t) => [t.url, t.category]));
@@ -59,7 +118,12 @@ export function TabCategoryList({
 
   return (
     <section>
-      <h2 className="section-title">Open Tabs</h2>
+      <div className="section-header">
+        <h2 className="section-title">Open Tabs</h2>
+        <button type="button" className="refresh-btn" onClick={onRefresh} title="Refresh tabs">
+          ↻
+        </button>
+      </div>
       {Array.from(grouped.entries()).map(([category, categoryTabs]) => (
         <div key={category} className="tab-group">
           <div className="tab-group__header">

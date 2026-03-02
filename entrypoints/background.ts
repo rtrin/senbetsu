@@ -3,7 +3,6 @@ import {
   handleCloseGroup,
   handleCloseTab,
   handleDeleteSession,
-  handleDismissOnboarding,
   handleGetMemoryUsage,
   handleRestoreSession,
   handleSaveAndGroup,
@@ -38,9 +37,6 @@ export default defineBackground(() => {
           break;
         case 'CMD_CLOSE_GROUP':
           responsePromise = handleCloseGroup(message.tabIds);
-          break;
-        case 'CMD_DISMISS_ONBOARDING':
-          responsePromise = handleDismissOnboarding();
           break;
         case 'CMD_GET_MEMORY_USAGE':
           responsePromise = handleGetMemoryUsage();

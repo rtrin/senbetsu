@@ -15,10 +15,6 @@ export type TabGroupColor =
 
 // ─── Storage ────────────────────────────────────────────────────
 
-export interface AppSettings {
-  hasSeenOnboarding: boolean;
-}
-
 export interface TabSnapshot {
   url: string;
   title: string;
@@ -52,6 +48,11 @@ export interface CmdSaveAndGroup {
   userPrompt?: string;
 }
 
+export interface CmdSaveAndGroup {
+  type: 'CMD_SAVE_AND_GROUP';
+  userPrompt?: string;
+}
+
 export interface CmdRestoreSession {
   type: 'CMD_RESTORE_SESSION';
   sessionId: string;
@@ -77,10 +78,6 @@ export interface CmdCloseGroup {
   tabIds: number[];
 }
 
-export interface CmdDismissOnboarding {
-  type: 'CMD_DISMISS_ONBOARDING';
-}
-
 export interface CmdGetMemoryUsage {
   type: 'CMD_GET_MEMORY_USAGE';
 }
@@ -97,7 +94,6 @@ export type PopupCommand =
   | CmdDeleteSession
   | CmdCloseTab
   | CmdCloseGroup
-  | CmdDismissOnboarding
   | CmdGetMemoryUsage
   | CmdClassifyUnsorted;
 

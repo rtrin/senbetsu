@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-export function useCurrentTabs(): chrome.tabs.Tab[] {
+export function useCurrentTabs(): { tabs: chrome.tabs.Tab[]; refresh: () => void } {
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
+  const refreshRef = useRef(() => {});
 
   useEffect(() => {
     function refresh() {
       chrome.tabs.query({ currentWindow: true }).then(setTabs);
     }
 
+    refreshRef.current = refresh;
     refresh();
 
     const onUpdated = (
@@ -32,5 +34,7 @@ export function useCurrentTabs(): chrome.tabs.Tab[] {
     };
   }, []);
 
-  return tabs;
+  const refresh = useCallback(() => refreshRef.current(), []);
+
+  return { tabs, refresh };
 }

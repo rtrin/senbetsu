@@ -1,5 +1,5 @@
-import { DEFAULT_SETTINGS, MAX_SAVED_SESSIONS, STORAGE_KEYS } from './constants';
-import type { AppSettings, TabSession, TabSnapshot } from './types';
+import { MAX_SAVED_SESSIONS, STORAGE_KEYS } from './constants';
+import type { TabSession, TabSnapshot } from './types';
 
 async function get<T>(key: string, fallback: T): Promise<T> {
   const result = await chrome.storage.local.get(key);
@@ -11,15 +11,6 @@ async function set(key: string, value: unknown): Promise<void> {
 }
 
 export const storage = {
-  async getSettings(): Promise<AppSettings> {
-    return get(STORAGE_KEYS.settings, DEFAULT_SETTINGS);
-  },
-
-  async updateSettings(patch: Partial<AppSettings>): Promise<void> {
-    const current = await storage.getSettings();
-    await set(STORAGE_KEYS.settings, { ...current, ...patch });
-  },
-
   async getSessions(): Promise<TabSession[]> {
     return get(STORAGE_KEYS.sessions, []);
   },
@@ -42,7 +33,6 @@ export const storage = {
 
     const latest = sessions[0];
 
-    // Create a map to ensure unique URLs, favoring the new categories
     const urlMap = new Map<string, TabSnapshot>();
     for (const tab of latest.tabs) {
       urlMap.set(tab.url, tab);

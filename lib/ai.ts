@@ -7,8 +7,8 @@ import type {
   TabClassificationInput,
 } from './types';
 
-function getSystemPrompt(userPrompt?: string): string {
-  const base = `You are an intelligent tab organizer. You will receive a list of browser tabs with their URLs, titles, and page content.
+function getSystemPrompt(userPrompt?: string, existingGroups?: string[]): string {
+  let base = `You are an intelligent tab organizer. You will receive a list of browser tabs with their URLs, titles, and page content.
 
 Your job is to group them into logical clusters and give each group a short, descriptive name based on the actual content (e.g. "React Libraries", "Job Applications", "Cooking Recipes").
 
@@ -20,6 +20,10 @@ Rules:
 
 Respond strictly in JSON format:
 { "groups": [{ "name": "<Group Name>", "tabIds": [<id>, ...] }] }`;
+
+  if (existingGroups && existingGroups.length > 0) {
+    base += `\n\nThese groups already exist: ${existingGroups.join(', ')}.\nPrefer assigning tabs to these existing groups when the content is a good fit.\nYou may create new groups if tabs don't fit any existing category.`;
+  }
 
   if (userPrompt?.trim()) {
     return `${base}\n\nUSER INSTRUCTION: Group the tabs based on: "${userPrompt.trim()}"`;
@@ -49,13 +53,14 @@ function buildTabList(tabs: TabClassificationInput[]): string {
 export async function classifyTabs(
   tabs: TabClassificationInput[],
   userPrompt?: string,
+  existingGroups?: string[],
 ): Promise<ClassificationResult[]> {
   if (tabs.length === 0) return [];
 
   const body: OpenAIChatRequest = {
     model: OPENAI_MODEL,
     messages: [
-      { role: 'system', content: getSystemPrompt(userPrompt) },
+      { role: 'system', content: getSystemPrompt(userPrompt, existingGroups) },
       { role: 'user', content: buildTabList(tabs) },
     ],
     temperature: 0.1,

@@ -55,16 +55,14 @@ export const UnsortedTabs = memo(function UnsortedTabs({
       <div className="tab-group__header">
         <span className="tab-group__dot tab-group__dot--dashed" />
         <span className="tab-group__name">Ungrouped</span>
-        <span className="tab-group__count">{unclassifiedTabs.length}</span>
-
-        {classifiableTabIds.length > 0 && (
+        {classifiableTabIds.length > 0 && latestSession && (
           <button
             type="button"
             className="btn btn--sm btn--primary ungrouped-action"
             onClick={() => onGroup(classifiableTabIds)}
             disabled={isGrouping}
           >
-            {isGrouping ? 'Grouping...' : 'Group'}
+            {isGrouping ? 'Cleaning Up...' : 'Clean Up'}
           </button>
         )}
 

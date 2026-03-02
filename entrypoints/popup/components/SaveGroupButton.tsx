@@ -9,37 +9,25 @@ interface SaveGroupButtonProps {
 export function SaveGroupButton({ isClassifying, onSave }: SaveGroupButtonProps) {
   const [prompt, setPrompt] = useState('');
 
-  const handleSave = () => {
-    onSave(prompt.trim() !== '' ? prompt : undefined);
-    setPrompt(''); // clear after save
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isClassifying) {
-      handleSave();
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(prompt.trim() || undefined);
+    setPrompt('');
   };
 
   return (
-    <div className="save-group-container">
+    <form className="save-group-form" onSubmit={handleSubmit}>
       <input
         type="text"
         className="prompt-input"
-        placeholder="Optional: How should we group these tabs?"
+        placeholder="Optional: How should these be grouped?"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        onKeyDown={handleKeyDown}
         disabled={isClassifying}
-        maxLength={100}
       />
-      <button
-        type="button"
-        className="btn btn--primary"
-        onClick={handleSave}
-        disabled={isClassifying}
-      >
-        {isClassifying ? 'Organizing Tabs...' : 'Save & Group Tabs'}
+      <button type="submit" className="btn btn--primary" disabled={isClassifying}>
+        {isClassifying ? 'Classifying...' : 'Save & Group'}
       </button>
-    </div>
+    </form>
   );
 }
