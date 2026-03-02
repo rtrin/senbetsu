@@ -13,22 +13,6 @@ export type TabGroupColor =
   | 'cyan'
   | 'orange';
 
-// ─── Storage ────────────────────────────────────────────────────
-
-export interface TabSnapshot {
-  url: string;
-  title: string;
-  favicon: string;
-  category: TabCategory;
-}
-
-export interface TabSession {
-  id: string;
-  savedAt: number;
-  label: string;
-  tabs: TabSnapshot[];
-}
-
 // ─── Popup Commands ─────────────────────────────────────────────
 
 export type MemoryLevel = 'high' | 'medium' | 'low';
@@ -53,19 +37,9 @@ export interface CmdSaveAndGroup {
   userPrompt?: string;
 }
 
-export interface CmdRestoreSession {
-  type: 'CMD_RESTORE_SESSION';
-  sessionId: string;
-}
-
 export interface CmdSwitchTab {
   type: 'CMD_SWITCH_TAB';
   tabId: number;
-}
-
-export interface CmdDeleteSession {
-  type: 'CMD_DELETE_SESSION';
-  sessionId: string;
 }
 
 export interface CmdCloseTab {
@@ -89,9 +63,7 @@ export interface CmdClassifyUnsorted {
 
 export type PopupCommand =
   | CmdSaveAndGroup
-  | CmdRestoreSession
   | CmdSwitchTab
-  | CmdDeleteSession
   | CmdCloseTab
   | CmdCloseGroup
   | CmdGetMemoryUsage

@@ -6,7 +6,7 @@
 
 WXT Chrome extension with React 19, TypeScript strict mode, Biome (lint/format), Vitest (tests).
 
-AI-powered tab manager that groups browser tabs using Gemini, tracks memory usage, and saves/restores tab sessions.
+AI-powered tab manager that groups browser tabs and tracks memory usage.
 
 ## Workflows
 

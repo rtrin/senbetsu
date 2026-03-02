@@ -4,17 +4,16 @@
 * create agentic workflow with trees (https://medium.com/@thelazyindiantechie/ mthe-ultimate-agentic-prompt-engineering-workflow-5f3c51d958e0)
 * rename groups in extension
 * unused tabs (remind user to close them)
+* toggle to either create new groups or add to existing groups
+* Session saving & restoring (maintain a history of tab groups that overrides local groupings)
 
 ## folders
 * button to store tab groups in folder
-* check folders that haven't been opened in a while
-* read user's bookmarks/folders and create groups for them
-  * user clicks on their folder, opens in a new window into groups
-
+* button to open folder as tab group
+  * for nested folders... (think about this more)
 
 ## Doing:
 * drag and drop tabs to move them between groups
 
 ### terminals in IDE
 * implement subscriptions/payment/auth?
-

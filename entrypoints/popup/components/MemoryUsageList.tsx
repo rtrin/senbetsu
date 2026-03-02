@@ -5,7 +5,6 @@ interface MemoryUsageListProps {
   isFetching: boolean;
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
-  onRefresh: () => void;
 }
 
 export function MemoryUsageList({
@@ -13,7 +12,6 @@ export function MemoryUsageList({
   isFetching,
   onSwitchTab,
   onCloseTab,
-  onRefresh,
 }: MemoryUsageListProps) {
   if (isFetching && memoryInfos.length === 0) {
     return <div className="memory-loading">Calculating memory usage...</div>;
@@ -23,15 +21,6 @@ export function MemoryUsageList({
     <section>
       <div className="section-header">
         <h2 className="section-title">Memory Usage</h2>
-        <button
-          type="button"
-          className="refresh-btn"
-          onClick={onRefresh}
-          disabled={isFetching}
-          title="Refresh memory usage"
-        >
-          {isFetching ? '...' : '↻'}
-        </button>
       </div>
       <div className="tab-group">
         {memoryInfos.length === 0 ? (

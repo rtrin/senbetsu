@@ -26,7 +26,7 @@ export function SaveGroupButton({ isClassifying, onSave }: SaveGroupButtonProps)
         disabled={isClassifying}
       />
       <button type="submit" className="btn btn--primary" disabled={isClassifying}>
-        {isClassifying ? 'Classifying...' : 'Save & Group'}
+        {isClassifying ? 'Grouping...' : 'Group Tabs'}
       </button>
     </form>
   );

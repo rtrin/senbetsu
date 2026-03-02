@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { STORAGE_KEYS } from '@/lib/constants';
-import { storage } from '@/lib/storage';
-import type { CommandResponse, PopupCommand, TabSession } from '@/lib/types';
+import type { CommandResponse, PopupCommand } from '@/lib/types';
 import './App.css';
 
 import type { TabMemoryInfo } from '@/lib/types';
 import { Header } from './components/Header';
 import { MemoryUsageList } from './components/MemoryUsageList';
 import { SaveGroupButton } from './components/SaveGroupButton';
-import { SessionHistory } from './components/SessionHistory';
 import { TabCategoryList } from './components/TabCategoryList';
 import { useCurrentTabs } from './hooks/useCurrentTabs';
 
@@ -17,54 +13,49 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 }
 
 function App() {
-  const [sessions, setSessions] = useState<TabSession[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [activeView, setActiveView] = useState<'groups' | 'memory'>('groups');
   const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
   const [isFetchingMemory, setIsFetchingMemory] = useState(false);
-  const { tabs: liveTabs, groups: liveGroups } = useCurrentTabs();
+  const { tabs: liveTabs, groups: liveGroups, refresh: refreshLiveTabs } = useCurrentTabs();
 
-  useEffect(() => {
-    storage.getSessions().then(setSessions);
-  }, []);
-
-  useEffect(() => {
-    const handler = (changes: Record<string, chrome.storage.StorageChange>) => {
-      if (changes[STORAGE_KEYS.sessions]) {
-        setSessions(changes[STORAGE_KEYS.sessions].newValue as TabSession[]);
+  const handleSaveAndGroup = useCallback(
+    async (prompt?: string) => {
+      setIsClassifying(true);
+      try {
+        const resp = await sendCommand({
+          type: 'CMD_SAVE_AND_GROUP',
+          userPrompt: prompt,
+        });
+        if (!resp.ok) {
+          console.error('[senbetsu] Group tabs failed:', resp.error);
+        } else {
+          refreshLiveTabs();
+        }
+      } finally {
+        setIsClassifying(false);
       }
-    };
-    chrome.storage.onChanged.addListener(handler);
-    return () => chrome.storage.onChanged.removeListener(handler);
-  }, []);
+    },
+    [refreshLiveTabs],
+  );
 
-  const handleSaveAndGroup = useCallback(async (prompt?: string) => {
-    setIsClassifying(true);
-    try {
-      const resp = await sendCommand({
-        type: 'CMD_SAVE_AND_GROUP',
-        userPrompt: prompt,
-      });
-      if (!resp.ok) {
-        console.error('[senbetsu] Save & group failed:', resp.error);
+  const handleCleanUp = useCallback(
+    async (tabIds: number[]) => {
+      setIsCleaningUp(true);
+      try {
+        const resp = await sendCommand({ type: 'CMD_CLASSIFY_UNSORTED', tabIds });
+        if (!resp.ok) {
+          console.error('[senbetsu] Clean up failed:', resp.error);
+        } else {
+          refreshLiveTabs();
+        }
+      } finally {
+        setIsCleaningUp(false);
       }
-    } finally {
-      setIsClassifying(false);
-    }
-  }, []);
-
-  const handleCleanUp = useCallback(async (tabIds: number[]) => {
-    setIsCleaningUp(true);
-    try {
-      const resp = await sendCommand({ type: 'CMD_CLASSIFY_UNSORTED', tabIds });
-      if (!resp.ok) {
-        console.error('[senbetsu] Clean up failed:', resp.error);
-      }
-    } finally {
-      setIsCleaningUp(false);
-    }
-  }, []);
+    },
+    [refreshLiveTabs],
+  );
 
   const fetchMemoryUsage = useCallback(async () => {
     setIsFetchingMemory(true);
@@ -94,14 +85,6 @@ function App() {
 
   const handleCloseGroup = useCallback((tabIds: number[]) => {
     sendCommand({ type: 'CMD_CLOSE_GROUP', tabIds });
-  }, []);
-
-  const handleRestoreSession = useCallback((sessionId: string) => {
-    sendCommand({ type: 'CMD_RESTORE_SESSION', sessionId });
-  }, []);
-
-  const handleDeleteSession = useCallback((sessionId: string) => {
-    sendCommand({ type: 'CMD_DELETE_SESSION', sessionId });
   }, []);
 
   return (
@@ -143,15 +126,8 @@ function App() {
           isFetching={isFetchingMemory}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
-          onRefresh={fetchMemoryUsage}
         />
       )}
-
-      <SessionHistory
-        sessions={sessions}
-        onRestore={handleRestoreSession}
-        onDelete={handleDeleteSession}
-      />
     </div>
   );
 }

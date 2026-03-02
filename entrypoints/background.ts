@@ -2,9 +2,7 @@ import {
   handleClassifyUnsorted,
   handleCloseGroup,
   handleCloseTab,
-  handleDeleteSession,
   handleGetMemoryUsage,
-  handleRestoreSession,
   handleSaveAndGroup,
   handleSwitchTab,
 } from '@/lib/commands';
@@ -23,14 +21,8 @@ export default defineBackground(() => {
         case 'CMD_SAVE_AND_GROUP':
           responsePromise = handleSaveAndGroup(message.userPrompt);
           break;
-        case 'CMD_RESTORE_SESSION':
-          responsePromise = handleRestoreSession(message.sessionId);
-          break;
         case 'CMD_SWITCH_TAB':
           responsePromise = handleSwitchTab(message.tabId);
-          break;
-        case 'CMD_DELETE_SESSION':
-          responsePromise = handleDeleteSession(message.sessionId);
           break;
         case 'CMD_CLOSE_TAB':
           responsePromise = handleCloseTab(message.tabId);
