@@ -276,7 +276,7 @@
 }
 
 .tab-group__dot--dashed {
-  background-color: transparent !important;
+  background-color: transparent;
   border: 1.5px dashed var(--color-grey);
 }
 

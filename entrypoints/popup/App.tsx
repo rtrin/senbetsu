@@ -10,7 +10,6 @@ import { MemoryUsageList } from './components/MemoryUsageList';
 import { SaveGroupButton } from './components/SaveGroupButton';
 import { SessionHistory } from './components/SessionHistory';
 import { TabCategoryList } from './components/TabCategoryList';
-import { UnsortedTabs } from './components/UnsortedTabs';
 import { useCurrentTabs } from './hooks/useCurrentTabs';
 
 function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
@@ -20,11 +19,11 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 function App() {
   const [sessions, setSessions] = useState<TabSession[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
-  const [isGrouping, setIsGrouping] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [activeView, setActiveView] = useState<'groups' | 'memory'>('groups');
   const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
   const [isFetchingMemory, setIsFetchingMemory] = useState(false);
-  const { tabs: liveTabs, refresh: refreshTabs } = useCurrentTabs();
+  const { tabs: liveTabs, groups: liveGroups } = useCurrentTabs();
 
   useEffect(() => {
     storage.getSessions().then(setSessions);
@@ -55,18 +54,15 @@ function App() {
     }
   }, []);
 
-  const handleClassifyUnsorted = useCallback(async (tabIds: number[]) => {
-    setIsGrouping(true);
+  const handleCleanUp = useCallback(async (tabIds: number[]) => {
+    setIsCleaningUp(true);
     try {
-      const resp = await sendCommand({
-        type: 'CMD_CLASSIFY_UNSORTED',
-        tabIds,
-      });
+      const resp = await sendCommand({ type: 'CMD_CLASSIFY_UNSORTED', tabIds });
       if (!resp.ok) {
-        console.error('[senbetsu] Classify unsorted failed:', resp.error);
+        console.error('[senbetsu] Clean up failed:', resp.error);
       }
     } finally {
-      setIsGrouping(false);
+      setIsCleaningUp(false);
     }
   }, []);
 
@@ -108,8 +104,6 @@ function App() {
     sendCommand({ type: 'CMD_DELETE_SESSION', sessionId });
   }, []);
 
-  const latestSession = sessions.length > 0 ? sessions[0] : null;
-
   return (
     <div className="popup">
       <Header tabCount={liveTabs.length} />
@@ -134,25 +128,15 @@ function App() {
       </div>
 
       {activeView === 'groups' ? (
-        <>
-          <TabCategoryList
-            tabs={liveTabs}
-            latestSession={latestSession}
-            onSwitchTab={handleSwitchTab}
-            onCloseTab={handleCloseTab}
-            onCloseGroup={handleCloseGroup}
-            onRefresh={refreshTabs}
-          />
-          <UnsortedTabs
-            tabs={liveTabs}
-            latestSession={latestSession}
-            isGrouping={isGrouping}
-            onGroup={handleClassifyUnsorted}
-            onSwitchTab={handleSwitchTab}
-            onCloseTab={handleCloseTab}
-            onCloseGroup={handleCloseGroup}
-          />
-        </>
+        <TabCategoryList
+          tabs={liveTabs}
+          groups={liveGroups}
+          isCleaningUp={isCleaningUp}
+          onSwitchTab={handleSwitchTab}
+          onCloseTab={handleCloseTab}
+          onCloseGroup={handleCloseGroup}
+          onCleanUp={handleCleanUp}
+        />
       ) : (
         <MemoryUsageList
           memoryInfos={memoryInfos.filter((info) => liveTabs.some((t) => t.id === info.tabId))}

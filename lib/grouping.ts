@@ -8,19 +8,14 @@ const trackedGroups = new Map<number, Map<TabCategory, number>>();
 const tabCategoryCache = new Map<number, TabCategory>();
 
 /**
- * Force Chrome to render the group title by toggling collapsed state.
- * Chrome has a known bug where tabGroups.update sets the title in the API
- * but the UI doesn't render it until the group is collapsed/uncollapsed.
+ * Updates the title and color of an existing Chrome tab group.
  */
-// TODO: check this
-async function forceRenderTitle(
+async function updateGroupMetadata(
   groupId: number,
   title: string,
   color: TabGroupColor,
 ): Promise<void> {
   const chromeColor = color as chrome.tabGroups.Color;
-
-  // Simple update — works on Chrome 146+
   await chrome.tabGroups.update(groupId, { title, color: chromeColor });
 }
 
@@ -105,7 +100,7 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
           windowGroups.set(category, groupId);
         }
 
-        await forceRenderTitle(groupId, category, color);
+        await updateGroupMetadata(groupId, category, color);
 
         for (const tabId of tabIds) {
           tabCategoryCache.set(tabId, category);

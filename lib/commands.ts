@@ -112,9 +112,11 @@ export async function handleClassifyUnsorted(
       tabInputs.push(...infos);
     }
 
-    const sessions = await storage.getSessions();
-    const existingGroups =
-      sessions.length > 0 ? Array.from(new Set(sessions[0].tabs.map((t) => t.category))) : [];
+    // Pull existing group names from live Chrome tab groups
+    const liveGroups = await chrome.tabGroups.query({});
+    const existingGroups = Array.from(
+      new Set(liveGroups.filter((g) => g.title).map((g) => g.title!)),
+    );
 
     const results = await classifyTabs(tabInputs, undefined, existingGroups);
     if (results.length === 0) {

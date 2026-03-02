@@ -24,6 +24,7 @@ docs/                     # Documentation, plans, PRDs
 - **Max file size**: 500 lines (target: 400)
 - **Max function size**: 60 lines (target: 50)
 - Split large files into domain-specific modules
+- **Quality Check**: Review the solution and ask yourself: "Would a staff engineer approve of this solution? Is it clean, simple, and elegant?"
 
 ### TypeScript
 

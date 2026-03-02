@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export function useCurrentTabs(): { tabs: chrome.tabs.Tab[]; refresh: () => void } {
+interface CurrentTabsResult {
+  tabs: chrome.tabs.Tab[];
+  groups: Map<number, chrome.tabGroups.TabGroup>;
+  refresh: () => void;
+}
+
+export function useCurrentTabs(): CurrentTabsResult {
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
+  const [groups, setGroups] = useState<Map<number, chrome.tabGroups.TabGroup>>(new Map());
   const refreshRef = useRef(() => {});
 
   useEffect(() => {
     function refresh() {
       chrome.tabs.query({ currentWindow: true }).then(setTabs);
+      chrome.tabGroups.query({}).then((g) => {
+        setGroups(new Map(g.map((group) => [group.id, group])));
+      });
     }
 
     refreshRef.current = refresh;
@@ -36,5 +46,5 @@ export function useCurrentTabs(): { tabs: chrome.tabs.Tab[]; refresh: () => void
 
   const refresh = useCallback(() => refreshRef.current(), []);
 
-  return { tabs, refresh };
+  return { tabs, groups, refresh };
 }

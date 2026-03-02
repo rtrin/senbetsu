@@ -4,7 +4,7 @@ description: Full feature development workflow for Chrome extension
 
 # Feature Development Workflow
 
-Complete workflow for developing a new feature with AI assistance.
+Complete workflow for developing a new feature with AI assistance. Keep the feature clean, elegant and simple.
 
 ## Available Skills
 

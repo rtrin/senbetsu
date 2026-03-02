@@ -1,180 +1,126 @@
-import type { TabCategory, TabSession } from '@/lib/types';
-import { getCategoryColor } from '@/lib/utils';
+import { isClassifiableUrl } from '@/lib/utils';
+import { TabItem } from './TabItem';
 
 interface TabCategoryListProps {
   tabs: chrome.tabs.Tab[];
-  latestSession: TabSession | null;
+  groups: Map<number, chrome.tabGroups.TabGroup>;
+  isCleaningUp: boolean;
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
   onCloseGroup: (tabIds: number[]) => void;
-  onRefresh: () => void;
-}
-
-interface ClassifiedTab {
-  tabId: number;
-  url: string;
-  title: string;
-  favIconUrl: string;
-  category: TabCategory;
-  isActive: boolean;
-}
-
-function getCategoryColorVar(category: TabCategory): string {
-  const color = getCategoryColor(category);
-  return `var(--color-${color})`;
+  onCleanUp: (tabIds: number[]) => void;
 }
 
 export function TabCategoryList({
   tabs,
-  latestSession,
+  groups,
+  isCleaningUp,
   onSwitchTab,
   onCloseTab,
   onCloseGroup,
-  onRefresh,
+  onCleanUp,
 }: TabCategoryListProps) {
-  // When no session exists yet, show all tabs in a flat list
-  if (!latestSession) {
-    const allTabs = tabs
-      .filter((t) => t.id && t.url)
-      .map((t) => ({
-        tabId: t.id!,
-        url: t.url!,
-        title: t.title ?? t.url!,
-        favIconUrl: t.favIconUrl ?? '',
-        isActive: t.active ?? false,
-      }));
+  const validTabs = tabs.filter((t) => t.id && t.url);
+  if (validTabs.length === 0) return null;
 
-    if (allTabs.length === 0) return null;
-
-    return (
-      <section>
-        <div className="section-header">
-          <h2 className="section-title">Open Tabs</h2>
-          <button type="button" className="refresh-btn" onClick={onRefresh} title="Refresh tabs">
-            ↻
-          </button>
-        </div>
-        <div className="tab-group">
-          {allTabs.map((tab) => (
-            <div key={tab.tabId} className="tab-item-row">
-              <button
-                type="button"
-                className={`tab-item ${tab.isActive ? 'tab-item--active' : ''}`}
-                onClick={() => onSwitchTab(tab.tabId)}
-                title={tab.url}
-              >
-                {tab.favIconUrl ? (
-                  <img
-                    className="tab-item__favicon"
-                    src={tab.favIconUrl}
-                    alt=""
-                    width={16}
-                    height={16}
-                  />
-                ) : (
-                  <span className="tab-item__favicon-fallback" />
-                )}
-                <span className="tab-item__title">{tab.title}</span>
-              </button>
-              <button
-                type="button"
-                className="close-btn close-btn--tab"
-                onClick={() => onCloseTab(tab.tabId)}
-                title="Close tab"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  // Build a URL → category map from the latest session
-  const urlToCategory = new Map(latestSession.tabs.map((t) => [t.url, t.category]));
-
-  // Match live tabs to their categories
-  const categorized: ClassifiedTab[] = tabs
-    .filter((t) => t.id && t.url && urlToCategory.has(t.url))
-    .map((t) => ({
-      tabId: t.id!,
-      url: t.url!,
-      title: t.title ?? t.url!,
-      favIconUrl: t.favIconUrl ?? '',
-      category: urlToCategory.get(t.url!)!,
-      isActive: t.active ?? false,
-    }));
-
-  if (categorized.length === 0) return null;
-
-  // Group by category
-  const grouped = new Map<TabCategory, ClassifiedTab[]>();
-  for (const tab of categorized) {
-    const existing = grouped.get(tab.category) ?? [];
+  // Group tabs by their live Chrome groupId
+  const byGroup = new Map<number, chrome.tabs.Tab[]>();
+  for (const tab of validTabs) {
+    const gid = tab.groupId ?? -1;
+    const existing = byGroup.get(gid) ?? [];
     existing.push(tab);
-    grouped.set(tab.category, existing);
+    byGroup.set(gid, existing);
   }
+
+  // Separate grouped and ungrouped
+  const ungrouped = byGroup.get(-1) ?? [];
+  byGroup.delete(-1);
 
   return (
     <section>
       <div className="section-header">
         <h2 className="section-title">Open Tabs</h2>
-        <button type="button" className="refresh-btn" onClick={onRefresh} title="Refresh tabs">
-          ↻
-        </button>
       </div>
-      {Array.from(grouped.entries()).map(([category, categoryTabs]) => (
-        <div key={category} className="tab-group">
-          <div className="tab-group__header">
-            <span
-              className="tab-group__dot"
-              style={{ backgroundColor: getCategoryColorVar(category) }}
-            />
-            <span className="tab-group__name">{category}</span>
-            <span className="tab-group__count">{categoryTabs.length}</span>
-            <button
-              type="button"
-              className="close-btn close-btn--group"
-              onClick={() => onCloseGroup(categoryTabs.map((t) => t.tabId))}
-              title={`Close all ${categoryTabs.length} tabs in "${category}"`}
-            >
-              ×
-            </button>
-          </div>
-          {categoryTabs.map((tab) => (
-            <div key={tab.tabId} className="tab-item-row">
+
+      {/* Render Chrome tab groups */}
+      {Array.from(byGroup.entries()).map(([groupId, groupTabs]) => {
+        const group = groups.get(groupId);
+        const groupName = group?.title || 'Unnamed Group';
+        const colorVar = group?.color ? `var(--color-${group.color})` : 'var(--color-grey)';
+
+        return (
+          <div key={groupId} className="tab-group">
+            <div className="tab-group__header">
+              <span className="tab-group__dot" style={{ backgroundColor: colorVar }} />
+              <span className="tab-group__name">{groupName}</span>
+              <span className="tab-group__count">{groupTabs.length}</span>
               <button
                 type="button"
-                className={`tab-item ${tab.isActive ? 'tab-item--active' : ''}`}
-                onClick={() => onSwitchTab(tab.tabId)}
-                title={tab.url}
-              >
-                {tab.favIconUrl ? (
-                  <img
-                    className="tab-item__favicon"
-                    src={tab.favIconUrl}
-                    alt=""
-                    width={16}
-                    height={16}
-                  />
-                ) : (
-                  <span className="tab-item__favicon-fallback" />
-                )}
-                <span className="tab-item__title">{tab.title}</span>
-              </button>
-              <button
-                type="button"
-                className="close-btn close-btn--tab"
-                onClick={() => onCloseTab(tab.tabId)}
-                title="Close tab"
+                className="close-btn close-btn--group"
+                onClick={() => onCloseGroup(groupTabs.map((t) => t.id!))}
+                title={`Close all ${groupTabs.length} tabs in "${groupName}"`}
               >
                 ×
               </button>
             </div>
+            {groupTabs.map((tab) => (
+              <TabItem
+                key={tab.id}
+                id={tab.id!}
+                url={tab.url!}
+                title={tab.title ?? tab.url!}
+                favIconUrl={tab.favIconUrl ?? ''}
+                isActive={tab.active ?? false}
+                onSwitchTab={onSwitchTab}
+                onCloseTab={onCloseTab}
+              />
+            ))}
+          </div>
+        );
+      })}
+
+      {/* Render ungrouped tabs */}
+      {ungrouped.length > 0 && (
+        <div className="tab-group tab-group--ungrouped">
+          <div className="tab-group__header">
+            <span className="tab-group__dot tab-group__dot--dashed" />
+            <span className="tab-group__name">Ungrouped</span>
+            {ungrouped.some((t) => isClassifiableUrl(t.url)) && (
+              <button
+                type="button"
+                className="btn btn--sm btn--primary ungrouped-action"
+                onClick={() =>
+                  onCleanUp(ungrouped.filter((t) => isClassifiableUrl(t.url)).map((t) => t.id!))
+                }
+                disabled={isCleaningUp}
+              >
+                {isCleaningUp ? 'Cleaning Up...' : 'Clean Up'}
+              </button>
+            )}
+            <button
+              type="button"
+              className="close-btn close-btn--group"
+              onClick={() => onCloseGroup(ungrouped.map((t) => t.id!))}
+              title="Close all ungrouped tabs"
+            >
+              ×
+            </button>
+          </div>
+          {ungrouped.map((tab) => (
+            <TabItem
+              key={tab.id}
+              id={tab.id!}
+              url={tab.url!}
+              title={tab.title ?? tab.url!}
+              favIconUrl={tab.favIconUrl ?? ''}
+              isActive={tab.active ?? false}
+              isHttp={isClassifiableUrl(tab.url)}
+              onSwitchTab={onSwitchTab}
+              onCloseTab={onCloseTab}
+            />
           ))}
         </div>
-      ))}
+      )}
     </section>
   );
 }

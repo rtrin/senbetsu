@@ -42,7 +42,7 @@ export function MemoryUsageList({
             No memory data available for current tabs.
           </div>
         ) : (
-          memoryInfos.map((info, idx) => (
+          memoryInfos.map((info, _idx) => (
             <div key={info.tabId} className="tab-item-row">
               <button
                 type="button"

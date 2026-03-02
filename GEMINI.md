@@ -43,6 +43,7 @@ Utilize specialized capabilities in `.agents/skills/`:
 - **TS Standards**: Use strict types, avoid `any`, define interfaces
 - **File Size**: Target < 400 lines (max 500); target < 50 lines per function (max 60)
 - **Patterns**: Follow existing patterns; split large files into domain-modules
+- **Quality Check**: Review the solution and ask yourself: "Would a staff engineer approve of this solution? Is it clean, simple, and elegant?"
 
 ### Tool Usage
 
