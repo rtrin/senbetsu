@@ -3,6 +3,7 @@ import {
   handleCloseGroup,
   handleCloseTab,
   handleGetMemoryUsage,
+  handleMoveTabToGroup,
   handleSaveAndGroup,
   handleSwitchTab,
 } from '@/lib/commands';
@@ -35,6 +36,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_CLASSIFY_UNSORTED':
           responsePromise = handleClassifyUnsorted(message.tabIds);
+          break;
+        case 'CMD_MOVE_TAB_TO_GROUP':
+          responsePromise = handleMoveTabToGroup(message.tabId, message.targetGroupName);
           break;
         default: {
           const _exhaustive: never = message;

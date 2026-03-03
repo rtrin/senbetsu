@@ -33,7 +33,7 @@ public/                     # Static assets (icons, images)
 ## Key Files
 
 - `lib/types.ts` — shared TypeScript types
-- `lib/ai.ts` — Gemini AI integration for tab grouping
+- `lib/ai.ts` — OpenAI integration for tab grouping
 - `lib/storage.ts` — chrome.storage wrapper
 - `lib/grouping.ts` — tab categorization logic
 - `lib/memory.ts` — tab memory usage tracking

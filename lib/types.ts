@@ -61,13 +61,20 @@ export interface CmdClassifyUnsorted {
   tabIds: number[];
 }
 
+export interface CmdMoveTabToGroup {
+  type: 'CMD_MOVE_TAB_TO_GROUP';
+  tabId: number;
+  targetGroupName: string;
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
   | CmdCloseTab
   | CmdCloseGroup
   | CmdGetMemoryUsage
-  | CmdClassifyUnsorted;
+  | CmdClassifyUnsorted
+  | CmdMoveTabToGroup;
 
 export interface CommandResponse {
   ok: boolean;

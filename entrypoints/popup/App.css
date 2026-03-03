@@ -589,3 +589,19 @@
     background-color: rgba(0, 0, 0, 0.05);
   }
 }
+
+/* ─── Drag and Drop ──────────────────────────────────────────── */
+
+.tab-item-row[draggable] {
+  cursor: grab;
+}
+
+.tab-item-row[draggable]:active {
+  cursor: grabbing;
+}
+
+.tab-group--drop-target {
+  outline: 2px dashed var(--color-blue);
+  outline-offset: -2px;
+  border-radius: 6px;
+}

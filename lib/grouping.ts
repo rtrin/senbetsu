@@ -37,8 +37,11 @@ async function findOrCreateGroup(windowId: number, category: TabCategory): Promi
   return null;
 }
 
-export async function applyClassifications(results: ClassificationResult[]): Promise<void> {
-  // Bootstrap trackedGroups from live Chrome tab groups
+/**
+ * Syncs the in-memory trackedGroups cache with live Chrome tab groups.
+ * Must be called before any findOrCreateGroup lookups.
+ */
+async function bootstrapTrackedGroups(): Promise<void> {
   try {
     const existingTabGroups = await chrome.tabGroups.query({});
     for (const group of existingTabGroups) {
@@ -54,6 +57,10 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
   } catch (e) {
     console.warn('[senbetsu] Failed to bootstrap existing tab groups:', e);
   }
+}
+
+export async function applyClassifications(results: ClassificationResult[]): Promise<void> {
+  await bootstrapTrackedGroups();
 
   const tabEntries = await Promise.all(
     results.map(async (r) => {
@@ -111,6 +118,40 @@ export async function applyClassifications(results: ClassificationResult[]): Pro
       }
     }
   }
+}
+
+export async function moveTabToGroup(tabId: number, targetGroupName: string): Promise<void> {
+  await bootstrapTrackedGroups();
+
+  const tab = await chrome.tabs.get(tabId);
+  if (!tab.windowId) return;
+
+  if (targetGroupName === 'Ungrouped') {
+    await chrome.tabs.ungroup(tabId);
+    return;
+  }
+
+  const existingGroupId = await findOrCreateGroup(tab.windowId, targetGroupName);
+  let groupId: number;
+
+  if (existingGroupId !== null) {
+    groupId = existingGroupId;
+    await chrome.tabs.group({ tabIds: [tabId], groupId });
+  } else {
+    groupId = await chrome.tabs.group({ tabIds: [tabId] });
+    let windowGroups = trackedGroups.get(tab.windowId);
+    if (!windowGroups) {
+      windowGroups = new Map();
+      trackedGroups.set(tab.windowId, windowGroups);
+    }
+    windowGroups.set(targetGroupName, groupId);
+  }
+
+  const color = getCategoryColor(targetGroupName);
+  await updateGroupMetadata(groupId, targetGroupName, color);
+
+  tabCategoryCache.set(tabId, targetGroupName);
+  console.log(`[senbetsu] Manually moved Tab ${tabId} → "${targetGroupName}" (group ${groupId})`);
 }
 
 export function removeTab(tabId: number): void {

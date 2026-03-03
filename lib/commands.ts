@@ -1,5 +1,5 @@
 import { classifyTabs } from './ai';
-import { applyClassifications } from './grouping';
+import { applyClassifications, moveTabToGroup } from './grouping';
 import type { CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
@@ -145,6 +145,18 @@ export async function handleGetMemoryUsage(): Promise<CommandResponse> {
     const memoryInfos = await measureTabMemory(tabs);
 
     return { ok: true, data: memoryInfos };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleMoveTabToGroup(
+  tabId: number,
+  targetGroupName: string,
+): Promise<CommandResponse> {
+  try {
+    await moveTabToGroup(tabId, targetGroupName);
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
   }

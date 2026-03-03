@@ -57,6 +57,33 @@ function App() {
     [refreshLiveTabs],
   );
 
+  const handleMoveTabToGroup = useCallback(
+    async (tabId: number, targetGroupName: string) => {
+      const tab = liveTabs.find((t) => t.id === tabId);
+      if (!tab) return;
+
+      const currentGroupName =
+        tab.groupId === -1 ? 'Ungrouped' : liveGroups.get(tab.groupId)?.title || 'Unnamed Group';
+      if (currentGroupName === targetGroupName) return;
+
+      try {
+        const resp = await sendCommand({
+          type: 'CMD_MOVE_TAB_TO_GROUP',
+          tabId,
+          targetGroupName,
+        });
+        if (!resp.ok) {
+          console.error('[senbetsu] Move tab failed:', resp.error);
+        } else {
+          refreshLiveTabs();
+        }
+      } catch (e) {
+        console.error('[senbetsu] Move tab error:', e);
+      }
+    },
+    [liveTabs, liveGroups, refreshLiveTabs],
+  );
+
   const fetchMemoryUsage = useCallback(async () => {
     setIsFetchingMemory(true);
     try {
@@ -119,6 +146,7 @@ function App() {
           onCloseTab={handleCloseTab}
           onCloseGroup={handleCloseGroup}
           onCleanUp={handleCleanUp}
+          onMoveTabToGroup={handleMoveTabToGroup}
         />
       ) : (
         <MemoryUsageList
