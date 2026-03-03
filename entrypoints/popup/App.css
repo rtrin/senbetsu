@@ -605,3 +605,139 @@
   outline-offset: -2px;
   border-radius: 6px;
 }
+
+/* ─── Grouping Error ────────────────────────────────────────── */
+
+.grouping-error {
+  font-size: 12px;
+  color: var(--color-red);
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* ─── Settings Panel ────────────────────────────────────────── */
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-section__title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-grey);
+  margin: 0;
+}
+
+.settings-tier {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-tier__label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.settings-tier__badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.settings-tier__badge--free {
+  color: var(--color-grey);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-tier__badge--pro {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.settings-tier__badge--byok {
+  color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.15);
+}
+
+.settings-usage {
+  font-size: 12px;
+  color: var(--color-grey);
+}
+
+.settings-upgrade-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.settings-license-active {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.settings-license-active__status {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.settings-license-input {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-license-input .prompt-input {
+  flex: 1;
+}
+
+.settings-apikey-input {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-apikey-input .prompt-input {
+  flex: 1;
+}
+
+.settings-apikey-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-error {
+  font-size: 12px;
+  color: var(--color-red);
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+@media (prefers-color-scheme: light) {
+  .settings-tier__badge--free {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .settings-license-active {
+    background: rgba(0, 0, 0, 0.03);
+  }
+  .grouping-error,
+  .settings-error {
+    background-color: rgba(239, 68, 68, 0.08);
+  }
+}

@@ -1,10 +1,12 @@
-import type { CommandResponse, PopupCommand } from '@/lib/types';
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants';
+import { storage } from '@/lib/storage';
+import type { AppSettings, CommandResponse, PopupCommand, TabMemoryInfo } from '@/lib/types';
 import './App.css';
 
-import type { TabMemoryInfo } from '@/lib/types';
 import { Header } from './components/Header';
 import { MemoryUsageList } from './components/MemoryUsageList';
 import { SaveGroupButton } from './components/SaveGroupButton';
+import { SettingsPanel } from './components/SettingsPanel';
 import { TabCategoryList } from './components/TabCategoryList';
 import { useCurrentTabs } from './hooks/useCurrentTabs';
 
@@ -15,46 +17,71 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 function App() {
   const [isClassifying, setIsClassifying] = useState(false);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
-  const [activeView, setActiveView] = useState<'groups' | 'memory'>('groups');
+  const [activeView, setActiveView] = useState<'groups' | 'memory' | 'settings'>('groups');
   const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
   const [isFetchingMemory, setIsFetchingMemory] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
+  const [usageCount, setUsageCount] = useState(0);
+  const [groupingError, setGroupingError] = useState('');
   const { tabs: liveTabs, groups: liveGroups, refresh: refreshLiveTabs } = useCurrentTabs();
+
+  const refreshSettings = useCallback(async () => {
+    const [s, count] = await Promise.all([storage.getSettings(), storage.getUsageCount()]);
+    setSettings(s);
+    setUsageCount(count);
+  }, []);
+
+  useEffect(() => {
+    refreshSettings();
+
+    const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (STORAGE_KEYS.settings in changes) {
+        refreshSettings();
+      }
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }, [refreshSettings]);
 
   const handleSaveAndGroup = useCallback(
     async (prompt?: string) => {
       setIsClassifying(true);
+      setGroupingError('');
       try {
         const resp = await sendCommand({
           type: 'CMD_SAVE_AND_GROUP',
           userPrompt: prompt,
         });
         if (!resp.ok) {
-          console.error('[senbetsu] Group tabs failed:', resp.error);
+          setGroupingError(resp.error ?? 'Grouping failed');
         } else {
           refreshLiveTabs();
+          refreshSettings();
         }
       } finally {
         setIsClassifying(false);
       }
     },
-    [refreshLiveTabs],
+    [refreshLiveTabs, refreshSettings],
   );
 
   const handleCleanUp = useCallback(
     async (tabIds: number[]) => {
       setIsCleaningUp(true);
+      setGroupingError('');
       try {
         const resp = await sendCommand({ type: 'CMD_CLASSIFY_UNSORTED', tabIds });
         if (!resp.ok) {
-          console.error('[senbetsu] Clean up failed:', resp.error);
+          setGroupingError(resp.error ?? 'Clean up failed');
         } else {
           refreshLiveTabs();
+          refreshSettings();
         }
       } finally {
         setIsCleaningUp(false);
       }
     },
-    [refreshLiveTabs],
+    [refreshLiveTabs, refreshSettings],
   );
 
   const handleMoveTabToGroup = useCallback(
@@ -118,7 +145,11 @@ function App() {
     <div className="popup">
       <Header tabCount={liveTabs.length} />
 
-      <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
+      {activeView !== 'settings' && (
+        <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
+      )}
+
+      {groupingError && <div className="grouping-error">{groupingError}</div>}
 
       <div className="view-toggle">
         <button
@@ -135,9 +166,16 @@ function App() {
         >
           Memory
         </button>
+        <button
+          type="button"
+          className={`toggle-btn ${activeView === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveView('settings')}
+        >
+          Settings
+        </button>
       </div>
 
-      {activeView === 'groups' ? (
+      {activeView === 'groups' && (
         <TabCategoryList
           tabs={liveTabs}
           groups={liveGroups}
@@ -148,12 +186,23 @@ function App() {
           onCleanUp={handleCleanUp}
           onMoveTabToGroup={handleMoveTabToGroup}
         />
-      ) : (
+      )}
+
+      {activeView === 'memory' && (
         <MemoryUsageList
           memoryInfos={memoryInfos.filter((info) => liveTabs.some((t) => t.id === info.tabId))}
           isFetching={isFetchingMemory}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
+        />
+      )}
+
+      {activeView === 'settings' && (
+        <SettingsPanel
+          settings={settings}
+          usageCount={usageCount}
+          sendCommand={sendCommand}
+          onSettingsChanged={refreshSettings}
         />
       )}
     </div>

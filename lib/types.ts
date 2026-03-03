@@ -13,6 +13,18 @@ export type TabGroupColor =
   | 'cyan'
   | 'orange';
 
+// ─── Settings ───────────────────────────────────────────────────
+
+export type UserTier = 'free' | 'pro' | 'byok';
+
+export interface AppSettings {
+  licenseKey?: string;
+  tier: UserTier;
+  openaiApiKey?: string;
+  dailyUsageCount: number;
+  dailyUsageDate: string;
+}
+
 // ─── Popup Commands ─────────────────────────────────────────────
 
 export type MemoryLevel = 'high' | 'medium' | 'low';
@@ -25,11 +37,6 @@ export interface TabMemoryInfo {
   jsHeapUsedMB: number;
   memoryLevel?: MemoryLevel;
   category?: string;
-}
-
-export interface CmdSaveAndGroup {
-  type: 'CMD_SAVE_AND_GROUP';
-  userPrompt?: string;
 }
 
 export interface CmdSaveAndGroup {
@@ -67,6 +74,20 @@ export interface CmdMoveTabToGroup {
   targetGroupName: string;
 }
 
+export interface CmdActivateLicense {
+  type: 'CMD_ACTIVATE_LICENSE';
+  licenseKey: string;
+}
+
+export interface CmdSaveSettings {
+  type: 'CMD_SAVE_SETTINGS';
+  openaiApiKey?: string | null;
+}
+
+export interface CmdDeactivateLicense {
+  type: 'CMD_DEACTIVATE_LICENSE';
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
@@ -74,7 +95,10 @@ export type PopupCommand =
   | CmdCloseGroup
   | CmdGetMemoryUsage
   | CmdClassifyUnsorted
-  | CmdMoveTabToGroup;
+  | CmdMoveTabToGroup
+  | CmdActivateLicense
+  | CmdSaveSettings
+  | CmdDeactivateLicense;
 
 export interface CommandResponse {
   ok: boolean;

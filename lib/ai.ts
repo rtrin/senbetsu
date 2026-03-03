@@ -1,4 +1,4 @@
-import { OPENAI_API_KEY, OPENAI_MODEL } from './constants';
+import { OPENAI_MODEL } from './constants';
 import type {
   AIGroupingResponse,
   ClassificationResult,
@@ -52,6 +52,7 @@ function buildTabList(tabs: TabClassificationInput[]): string {
 
 export async function classifyTabs(
   tabs: TabClassificationInput[],
+  apiKey: string,
   userPrompt?: string,
   existingGroups?: string[],
 ): Promise<ClassificationResult[]> {
@@ -71,7 +72,7 @@ export async function classifyTabs(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   });
@@ -121,4 +122,15 @@ export async function classifyTabs(
   }
 
   return results;
+}
+
+export async function validateOpenAIKey(apiKey: string): Promise<boolean> {
+  try {
+    const res = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

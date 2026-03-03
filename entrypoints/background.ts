@@ -1,10 +1,13 @@
 import {
+  handleActivateLicense,
   handleClassifyUnsorted,
   handleCloseGroup,
   handleCloseTab,
+  handleDeactivateLicense,
   handleGetMemoryUsage,
   handleMoveTabToGroup,
   handleSaveAndGroup,
+  handleSaveSettings,
   handleSwitchTab,
 } from '@/lib/commands';
 import { cleanupWindow, removeTab } from '@/lib/grouping';
@@ -39,6 +42,15 @@ export default defineBackground(() => {
           break;
         case 'CMD_MOVE_TAB_TO_GROUP':
           responsePromise = handleMoveTabToGroup(message.tabId, message.targetGroupName);
+          break;
+        case 'CMD_ACTIVATE_LICENSE':
+          responsePromise = handleActivateLicense(message.licenseKey);
+          break;
+        case 'CMD_DEACTIVATE_LICENSE':
+          responsePromise = handleDeactivateLicense();
+          break;
+        case 'CMD_SAVE_SETTINGS':
+          responsePromise = handleSaveSettings(message.openaiApiKey ?? null);
           break;
         default: {
           const _exhaustive: never = message;
