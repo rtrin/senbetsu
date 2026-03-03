@@ -31,7 +31,11 @@
       "Bash(git check-ignore:*)",
       "Bash(git add:*)",
       "Bash(git worktree:*)",
-      "Bash(sips:*)"
+      "Bash(sips:*)",
+      "Bash(git commit:*)",
+      "Bash(cd:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)"
     ]
   }
 }

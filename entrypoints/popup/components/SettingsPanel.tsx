@@ -108,14 +108,22 @@ export function SettingsPanel({
           <button
             type="button"
             className="btn btn--primary btn--sm settings-upgrade-btn"
-            onClick={() => chrome.tabs.create({ url: 'https://lemonsqueezy.com' })}
+            onClick={() =>
+              chrome.tabs.create({
+                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c08ff5cc-23c0-4f36-85f9-0c5eb89d3e9a',
+              })
+            }
           >
             Upgrade to Pro — $5/mo
           </button>
           <button
             type="button"
             className="btn btn--ghost settings-upgrade-btn"
-            onClick={() => chrome.tabs.create({ url: 'https://lemonsqueezy.com' })}
+            onClick={() =>
+              chrome.tabs.create({
+                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c360fa2b-dda6-4d25-a51b-4badc8ee62c5',
+              })
+            }
           >
             Get BYOK — $7 one-time
           </button>
