@@ -95,10 +95,10 @@ export function SettingsPanel({
         </div>
         {settings.tier === 'free' ? (
           <div className="settings-usage">
-            {usageCount} / {FREE_DAILY_LIMIT} free groupings today
+            {usageCount} / {FREE_DAILY_LIMIT} free usages today
           </div>
         ) : (
-          <div className="settings-usage">Unlimited groupings</div>
+          <div className="settings-usage">Unlimited usages</div>
         )}
       </div>
 

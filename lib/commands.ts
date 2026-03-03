@@ -54,7 +54,7 @@ async function resolveClassificationStrategy(): Promise<ClassificationStrategy> 
   const count = await storage.getUsageCount();
   if (count >= FREE_DAILY_LIMIT) {
     return {
-      error: `Daily limit of ${FREE_DAILY_LIMIT} free groupings reached. Upgrade to Pro or add your own API key.`,
+      error: `Daily limit of ${FREE_DAILY_LIMIT} free usages reached. Upgrade to Pro or add your own API key.`,
     };
   }
   return { mode: 'proxy' };
