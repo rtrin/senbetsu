@@ -1,6 +1,8 @@
 import type { TabMemoryInfo } from './types';
 import { isClassifiableUrl } from './utils';
 
+const SCRAPE_TIMEOUT_MS = 2000;
+
 export async function measureTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemoryInfo[]> {
   const classifiable = tabs.filter(
     (t) => t.id !== undefined && !t.discarded && isClassifiableUrl(t.url),
@@ -14,11 +16,10 @@ export async function measureTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemo
 
     const infos = await Promise.all(
       batch.map(async (t) => {
-        // Exclude the extension's own popup and pages
         if (t.url?.startsWith(chrome.runtime.getURL(''))) return null;
 
         try {
-          const res = await chrome.scripting.executeScript({
+          const scrapePromise = chrome.scripting.executeScript({
             target: { tabId: t.id! },
             func: () => {
               // @ts-expect-error
@@ -27,8 +28,14 @@ export async function measureTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemo
               return memory.usedJSHeapSize;
             },
           });
+          const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), SCRAPE_TIMEOUT_MS),
+          );
 
-          const usedJSHeapSize = res[0]?.result;
+          const res = await Promise.race([scrapePromise, timeoutPromise]);
+          if (!res) return null;
+
+          const usedJSHeapSize = (res as chrome.scripting.InjectionResult[])[0]?.result;
           if (typeof usedJSHeapSize !== 'number') return null;
 
           return {
@@ -39,7 +46,6 @@ export async function measureTabMemory(tabs: chrome.tabs.Tab[]): Promise<TabMemo
             jsHeapUsedMB: usedJSHeapSize / (1024 * 1024),
           };
         } catch {
-          // May throw error if it's a restricted page or chrome://
           return null;
         }
       }),

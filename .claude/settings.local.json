@@ -27,7 +27,8 @@
       "WebFetch(domain:developer.chrome.com)",
       "mcp__ide__getDiagnostics",
       "Bash(npx biome:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }
