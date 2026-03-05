@@ -729,6 +729,44 @@
   border-radius: 6px;
 }
 
+.settings-tips {
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+.settings-tip {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.settings-tip__icon {
+  font-size: 14px;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.settings-tip__text {
+  font-size: 12px;
+  color: var(--color-grey);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.settings-tip__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.settings-tip__link:hover {
+  text-decoration: underline;
+}
 @media (prefers-color-scheme: light) {
   .settings-tier__badge--free {
     background-color: rgba(0, 0, 0, 0.05);

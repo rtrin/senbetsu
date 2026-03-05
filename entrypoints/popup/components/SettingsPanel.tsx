@@ -211,6 +211,40 @@ export function SettingsPanel({
       )}
 
       {error && <div className="settings-error">{error}</div>}
+
+      {/* ── Tips ── */}
+      <div className="settings-section settings-tips">
+        <h3 className="settings-section__title">Tips</h3>
+        <div className="settings-tip">
+          <span className="settings-tip__icon">⌨️</span>
+          <p className="settings-tip__text">
+            Set a keyboard shortcut to open Senbetsu instantly.{' '}
+            <button
+              type="button"
+              className="settings-tip__link"
+              onClick={() => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })}
+            >
+              Open shortcut settings →
+            </button>
+          </p>
+        </div>
+        {settings.tier === 'byok' && (
+          <div className="settings-tip">
+            <span className="settings-tip__icon">🔑</span>
+            <p className="settings-tip__text">
+              Need an OpenAI key?{' '}
+              <button
+                type="button"
+                className="settings-tip__link"
+                onClick={() => chrome.tabs.create({ url: 'https://platform.openai.com/api-keys' })}
+              >
+                Get one at platform.openai.com →
+              </button>{' '}
+              Create an account, go to API Keys, and generate a new secret key.
+            </p>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
