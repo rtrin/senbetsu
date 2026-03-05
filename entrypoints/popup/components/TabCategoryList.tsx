@@ -11,6 +11,7 @@ interface TabCategoryListProps {
   onCloseGroup: (tabIds: number[]) => void;
   onCleanUp: (tabIds: number[]) => void;
   onMoveTabToGroup: (tabId: number, targetGroupName: string) => void;
+  onBookmarkTab: (tabId: number) => void;
 }
 
 export function TabCategoryList({
@@ -22,6 +23,7 @@ export function TabCategoryList({
   onCloseGroup,
   onCleanUp,
   onMoveTabToGroup,
+  onBookmarkTab,
 }: TabCategoryListProps) {
   const [dragOverGroupId, setDragOverGroupId] = useState<number | null>(null);
 
@@ -100,6 +102,7 @@ export function TabCategoryList({
                   isActive={tab.active ?? false}
                   onSwitchTab={onSwitchTab}
                   onCloseTab={onCloseTab}
+                  onBookmarkTab={onBookmarkTab}
                 />
               ))}
             </div>
@@ -166,6 +169,7 @@ export function TabCategoryList({
                 isHttp={isClassifiableUrl(tab.url)}
                 onSwitchTab={onSwitchTab}
                 onCloseTab={onCloseTab}
+                onBookmarkTab={onBookmarkTab}
               />
             ))}
           </div>

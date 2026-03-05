@@ -141,6 +141,10 @@ function App() {
     sendCommand({ type: 'CMD_CLOSE_GROUP', tabIds });
   }, []);
 
+  const handleBookmarkTab = useCallback((tabId: number) => {
+    sendCommand({ type: 'CMD_BOOKMARK_TAB', tabId });
+  }, []);
+
   return (
     <div className="popup">
       <Header tabCount={liveTabs.length} />
@@ -185,6 +189,7 @@ function App() {
           onCloseGroup={handleCloseGroup}
           onCleanUp={handleCleanUp}
           onMoveTabToGroup={handleMoveTabToGroup}
+          onBookmarkTab={handleBookmarkTab}
         />
       )}
 

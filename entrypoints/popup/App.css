@@ -323,8 +323,25 @@
   flex-shrink: 0;
 }
 
+.action-btn--bookmark {
+  font-size: 14px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tab-group__header:hover .close-btn--group,
-.tab-item-row:hover .close-btn--tab {
+.tab-item-row:hover .close-btn--tab,
+.tab-item-row:hover .action-btn--bookmark {
   opacity: 1;
 }
 
