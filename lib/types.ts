@@ -23,6 +23,7 @@ export interface AppSettings {
   openaiApiKey?: string;
   dailyUsageCount: number;
   dailyUsageDate: string;
+  bookmarkAutoClose?: boolean;
 }
 
 // ─── Popup Commands ─────────────────────────────────────────────
@@ -88,6 +89,11 @@ export interface CmdDeactivateLicense {
   type: 'CMD_DEACTIVATE_LICENSE';
 }
 
+export interface CmdBookmarkTab {
+  type: 'CMD_BOOKMARK_TAB';
+  tabId: number;
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
@@ -98,7 +104,8 @@ export type PopupCommand =
   | CmdMoveTabToGroup
   | CmdActivateLicense
   | CmdSaveSettings
-  | CmdDeactivateLicense;
+  | CmdDeactivateLicense
+  | CmdBookmarkTab;
 
 export interface CommandResponse {
   ok: boolean;
