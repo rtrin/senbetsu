@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FREE_DAILY_LIMIT } from '@/lib/constants';
+import { storage } from '@/lib/storage';
 import type { AppSettings, CommandResponse, PopupCommand } from '@/lib/types';
 
 interface SettingsPanelProps {
@@ -22,6 +23,7 @@ export function SettingsPanel({
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [error, setError] = useState('');
+  const [bookmarkAutoClose, setBookmarkAutoClose] = useState(settings.bookmarkAutoClose !== false);
 
   const tierLabel = settings.tier === 'free' ? 'Free' : settings.tier === 'pro' ? 'Pro' : 'BYOK';
 
@@ -70,6 +72,12 @@ export function SettingsPanel({
     } finally {
       setIsSavingKey(false);
     }
+  };
+
+  const handleToggleAutoClose = async () => {
+    const newValue = !bookmarkAutoClose;
+    setBookmarkAutoClose(newValue);
+    await storage.updateSettings({ bookmarkAutoClose: newValue });
   };
 
   const handleRemoveApiKey = async () => {
@@ -211,6 +219,21 @@ export function SettingsPanel({
       )}
 
       {error && <div className="settings-error">{error}</div>}
+
+      {/* ── Bookmarks ── */}
+      <div className="settings-section">
+        <h3 className="settings-section__title">Bookmarks</h3>
+        <div className="toggle-row">
+          <span className="toggle-row__label">Auto-close tab after bookmarking</span>
+          <button
+            type="button"
+            className={`toggle ${bookmarkAutoClose ? 'toggle--on' : ''}`}
+            onClick={handleToggleAutoClose}
+          >
+            <span className="toggle__knob" />
+          </button>
+        </div>
+      </div>
 
       {/* ── Tips ── */}
       <div className="settings-section settings-tips">
