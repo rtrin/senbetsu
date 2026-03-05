@@ -94,6 +94,21 @@ export interface CmdBookmarkTab {
   tabId: number;
 }
 
+export interface CmdSaveGroupToFolder {
+  type: 'CMD_SAVE_GROUP_TO_FOLDER';
+  tabIds: number[];
+  groupName: string;
+}
+
+export interface CmdOpenFolderAsGroup {
+  type: 'CMD_OPEN_FOLDER_AS_GROUP';
+  folderId: string;
+}
+
+export interface CmdGetBookmarkFolders {
+  type: 'CMD_GET_BOOKMARK_FOLDERS';
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
@@ -105,7 +120,10 @@ export type PopupCommand =
   | CmdActivateLicense
   | CmdSaveSettings
   | CmdDeactivateLicense
-  | CmdBookmarkTab;
+  | CmdBookmarkTab
+  | CmdSaveGroupToFolder
+  | CmdOpenFolderAsGroup
+  | CmdGetBookmarkFolders;
 
 export interface CommandResponse {
   ok: boolean;
@@ -114,6 +132,14 @@ export interface CommandResponse {
 }
 
 export type ExtensionMessage = PopupCommand;
+
+// ─── Bookmark Folders ───────────────────────────────────────────
+
+export interface BookmarkFolder {
+  id: string;
+  title: string;
+  childCount: number;
+}
 
 // ─── Classification ──────────────────────────────────────────────
 

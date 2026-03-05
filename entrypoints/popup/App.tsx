@@ -1,8 +1,15 @@
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants';
 import { storage } from '@/lib/storage';
-import type { AppSettings, CommandResponse, PopupCommand, TabMemoryInfo } from '@/lib/types';
+import type {
+  AppSettings,
+  BookmarkFolder,
+  CommandResponse,
+  PopupCommand,
+  TabMemoryInfo,
+} from '@/lib/types';
 import './App.css';
 
+import { FolderList } from './components/FolderList';
 import { Header } from './components/Header';
 import { MemoryUsageList } from './components/MemoryUsageList';
 import { SaveGroupButton } from './components/SaveGroupButton';
@@ -17,9 +24,13 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 function App() {
   const [isClassifying, setIsClassifying] = useState(false);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
-  const [activeView, setActiveView] = useState<'groups' | 'memory' | 'settings'>('groups');
+  const [activeView, setActiveView] = useState<'groups' | 'folders' | 'memory' | 'settings'>(
+    'groups',
+  );
   const [memoryInfos, setMemoryInfos] = useState<TabMemoryInfo[]>([]);
   const [isFetchingMemory, setIsFetchingMemory] = useState(false);
+  const [folders, setFolders] = useState<BookmarkFolder[]>([]);
+  const [isFetchingFolders, setIsFetchingFolders] = useState(false);
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
   const [usageCount, setUsageCount] = useState(0);
   const [groupingError, setGroupingError] = useState('');
@@ -145,11 +156,50 @@ function App() {
     sendCommand({ type: 'CMD_BOOKMARK_TAB', tabId });
   }, []);
 
+  const handleSaveGroupToFolder = useCallback(async (tabIds: number[], groupName: string) => {
+    const resp = await sendCommand({
+      type: 'CMD_SAVE_GROUP_TO_FOLDER',
+      tabIds,
+      groupName,
+    });
+    if (!resp.ok) {
+      setGroupingError(resp.error ?? 'Failed to save group');
+    }
+  }, []);
+
+  const fetchFolders = useCallback(async () => {
+    setIsFetchingFolders(true);
+    try {
+      const resp = await sendCommand({ type: 'CMD_GET_BOOKMARK_FOLDERS' });
+      if (resp.ok && resp.data) {
+        setFolders(resp.data as BookmarkFolder[]);
+      }
+    } finally {
+      setIsFetchingFolders(false);
+    }
+  }, []);
+
+  const handleSwitchToFolders = useCallback(() => {
+    setActiveView('folders');
+    fetchFolders();
+  }, [fetchFolders]);
+
+  const handleOpenFolder = useCallback(
+    async (folderId: string) => {
+      const resp = await sendCommand({ type: 'CMD_OPEN_FOLDER_AS_GROUP', folderId });
+      if (resp.ok) {
+        fetchFolders();
+        refreshLiveTabs();
+      }
+    },
+    [fetchFolders, refreshLiveTabs],
+  );
+
   return (
     <div className="popup">
       <Header tabCount={liveTabs.length} />
 
-      {activeView !== 'settings' && (
+      {activeView !== 'settings' && activeView !== 'folders' && (
         <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
       )}
 
@@ -162,6 +212,13 @@ function App() {
           onClick={() => setActiveView('groups')}
         >
           Groups
+        </button>
+        <button
+          type="button"
+          className={`toggle-btn ${activeView === 'folders' ? 'active' : ''}`}
+          onClick={handleSwitchToFolders}
+        >
+          Folders
         </button>
         <button
           type="button"
@@ -190,6 +247,15 @@ function App() {
           onCleanUp={handleCleanUp}
           onMoveTabToGroup={handleMoveTabToGroup}
           onBookmarkTab={handleBookmarkTab}
+          onSaveGroupToFolder={handleSaveGroupToFolder}
+        />
+      )}
+
+      {activeView === 'folders' && (
+        <FolderList
+          folders={folders}
+          isFetching={isFetchingFolders}
+          onOpenFolder={handleOpenFolder}
         />
       )}
 

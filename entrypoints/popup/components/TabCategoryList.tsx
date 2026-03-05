@@ -12,6 +12,7 @@ interface TabCategoryListProps {
   onCleanUp: (tabIds: number[]) => void;
   onMoveTabToGroup: (tabId: number, targetGroupName: string) => void;
   onBookmarkTab: (tabId: number) => void;
+  onSaveGroupToFolder: (tabIds: number[], groupName: string) => void;
 }
 
 export function TabCategoryList({
@@ -24,6 +25,7 @@ export function TabCategoryList({
   onCleanUp,
   onMoveTabToGroup,
   onBookmarkTab,
+  onSaveGroupToFolder,
 }: TabCategoryListProps) {
   const [dragOverGroupId, setDragOverGroupId] = useState<number | null>(null);
 
@@ -83,6 +85,32 @@ export function TabCategoryList({
                 <span className="tab-group__dot" style={{ backgroundColor: colorVar }} />
                 <span className="tab-group__name">{groupName}</span>
                 <span className="tab-group__count">{groupTabs.length}</span>
+                <button
+                  type="button"
+                  className="action-btn action-btn--save-folder"
+                  onClick={() =>
+                    onSaveGroupToFolder(
+                      groupTabs.map((t) => t.id!),
+                      groupName,
+                    )
+                  }
+                  title={`Save "${groupName}" as bookmark folder`}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    role="img"
+                    aria-label="Save to folder"
+                  >
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                  </svg>
+                </button>
                 <button
                   type="button"
                   className="close-btn close-btn--group"

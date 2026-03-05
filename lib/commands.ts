@@ -270,3 +270,91 @@ export async function handleBookmarkTab(tabId: number): Promise<CommandResponse>
     return { ok: false, error: String(e) };
   }
 }
+
+export async function handleSaveGroupToFolder(
+  tabIds: number[],
+  groupName: string,
+): Promise<CommandResponse> {
+  try {
+    const folder = await chrome.bookmarks.create({
+      parentId: '1',
+      title: groupName,
+    });
+
+    for (const tabId of tabIds) {
+      const tab = await chrome.tabs.get(tabId);
+      await chrome.bookmarks.create({
+        parentId: folder.id,
+        title: tab.title ?? tab.url ?? 'Untitled',
+        url: tab.url,
+      });
+    }
+
+    const settings = await storage.getSettings();
+    if (settings.bookmarkAutoClose !== false) {
+      await chrome.tabs.remove(tabIds);
+    }
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
+  try {
+    const children = await chrome.bookmarks.getChildren('1');
+    const folders = children.filter((node) => !node.url);
+
+    const result = await Promise.all(
+      folders.map(async (folder) => {
+        const contents = await chrome.bookmarks.getChildren(folder.id);
+        return {
+          id: folder.id,
+          title: folder.title,
+          childCount: contents.length,
+        };
+      }),
+    );
+
+    return { ok: true, data: result };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleOpenFolderAsGroup(folderId: string): Promise<CommandResponse> {
+  try {
+    const children = await chrome.bookmarks.getChildren(folderId);
+    const bookmarks = children.filter((node) => node.url);
+
+    if (bookmarks.length === 0) {
+      return { ok: false, error: 'Folder is empty' };
+    }
+
+    const newTabIds: number[] = [];
+    for (const bookmark of bookmarks) {
+      const tab = await chrome.tabs.create({ url: bookmark.url, active: false });
+      if (tab.id) newTabIds.push(tab.id);
+    }
+
+    if (newTabIds.length > 0) {
+      const groupId = await chrome.tabs.group({
+        tabIds: newTabIds as [number, ...number[]],
+      });
+
+      // Get folder title for the group name
+      const parent = await chrome.bookmarks.getChildren('1');
+      const folder = parent.find((n) => n.id === folderId);
+      const title = folder?.title ?? 'Restored';
+      const color = 'blue' as chrome.tabGroups.Color;
+      await chrome.tabGroups.update(groupId, { title, color });
+    }
+
+    await chrome.bookmarks.removeTree(folderId);
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

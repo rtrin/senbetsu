@@ -223,7 +223,7 @@ export function SettingsPanel({
       <div className="settings-section">
         <h3 className="settings-section__title">Bookmarks</h3>
         <div className="toggle-row">
-          <span className="toggle-row__label">Auto-close tab after bookmarking</span>
+          <span className="toggle-row__label">Auto-close tabs after saving</span>
           <button
             type="button"
             className={`toggle ${bookmarkAutoClose ? 'toggle--on' : ''}`}

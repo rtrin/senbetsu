@@ -5,9 +5,12 @@ import {
   handleCloseGroup,
   handleCloseTab,
   handleDeactivateLicense,
+  handleGetBookmarkFolders,
   handleGetMemoryUsage,
   handleMoveTabToGroup,
+  handleOpenFolderAsGroup,
   handleSaveAndGroup,
+  handleSaveGroupToFolder,
   handleSaveSettings,
   handleSwitchTab,
 } from '@/lib/commands';
@@ -55,6 +58,15 @@ export default defineBackground(() => {
           break;
         case 'CMD_BOOKMARK_TAB':
           responsePromise = handleBookmarkTab(message.tabId);
+          break;
+        case 'CMD_SAVE_GROUP_TO_FOLDER':
+          responsePromise = handleSaveGroupToFolder(message.tabIds, message.groupName);
+          break;
+        case 'CMD_OPEN_FOLDER_AS_GROUP':
+          responsePromise = handleOpenFolderAsGroup(message.folderId);
+          break;
+        case 'CMD_GET_BOOKMARK_FOLDERS':
+          responsePromise = handleGetBookmarkFolders();
           break;
         default: {
           const _exhaustive: never = message;

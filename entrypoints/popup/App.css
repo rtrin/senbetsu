@@ -339,7 +339,24 @@
   justify-content: center;
 }
 
+.action-btn--save-folder {
+  font-size: 14px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tab-group__header:hover .close-btn--group,
+.tab-group__header:hover .action-btn--save-folder,
 .tab-item-row:hover .close-btn--tab,
 .tab-item-row:hover .action-btn--bookmark {
   opacity: 1;
@@ -784,6 +801,63 @@
 .settings-tip__link:hover {
   text-decoration: underline;
 }
+
+/* ─── Folder List ───────────────────────────────────────────── */
+
+.folder-empty {
+  padding: 12px 8px;
+  font-size: 13px;
+  opacity: 0.6;
+  text-align: center;
+}
+
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.folder-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.folder-item__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.folder-item__icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.folder-item__name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-item__count {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
 @media (prefers-color-scheme: light) {
   .settings-tier__badge--free {
     background-color: rgba(0, 0, 0, 0.05);
@@ -794,5 +868,11 @@
   .grouping-error,
   .settings-error {
     background-color: rgba(239, 68, 68, 0.08);
+  }
+  .folder-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .folder-item__count {
+    background: rgba(0, 0, 0, 0.08);
   }
 }
