@@ -23,7 +23,7 @@ export function SettingsPanel({
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [error, setError] = useState('');
-  const [bookmarkAutoClose, setBookmarkAutoClose] = useState(settings.bookmarkAutoClose !== false);
+  const bookmarkAutoClose = settings.bookmarkAutoClose !== false;
 
   const tierLabel = settings.tier === 'free' ? 'Free' : settings.tier === 'pro' ? 'Pro' : 'BYOK';
 
@@ -75,9 +75,8 @@ export function SettingsPanel({
   };
 
   const handleToggleAutoClose = async () => {
-    const newValue = !bookmarkAutoClose;
-    setBookmarkAutoClose(newValue);
-    await storage.updateSettings({ bookmarkAutoClose: newValue });
+    await storage.updateSettings({ bookmarkAutoClose: !bookmarkAutoClose });
+    onSettingsChanged();
   };
 
   const handleRemoveApiKey = async () => {
