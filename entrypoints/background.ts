@@ -1,5 +1,6 @@
 import {
   handleActivateLicense,
+  handleBookmarkTab,
   handleClassifyUnsorted,
   handleCloseGroup,
   handleCloseTab,
@@ -51,6 +52,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_SAVE_SETTINGS':
           responsePromise = handleSaveSettings(message.openaiApiKey ?? null);
+          break;
+        case 'CMD_BOOKMARK_TAB':
+          responsePromise = handleBookmarkTab(message.tabId);
           break;
         default: {
           const _exhaustive: never = message;

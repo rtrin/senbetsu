@@ -250,3 +250,23 @@ export async function handleSaveSettings(openaiApiKey: string | null): Promise<C
     return { ok: false, error: String(e) };
   }
 }
+
+export async function handleBookmarkTab(tabId: number): Promise<CommandResponse> {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    await chrome.bookmarks.create({
+      parentId: '1',
+      title: tab.title ?? tab.url ?? 'Untitled',
+      url: tab.url,
+    });
+
+    const settings = await storage.getSettings();
+    if (settings.bookmarkAutoClose !== false) {
+      await chrome.tabs.remove(tabId);
+    }
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
