@@ -14,11 +14,9 @@
 
 ## Doing:
 * One-click add group to new folder
-  * research if this requires a new permission
   * removes group from view
     * though, we will need to have a folder view as well. (if user opens a folder as a group, should remove the folder from view and actual bookmark bar etc)
   * have a toggle for autoclosing tab if bookmarked (on by default)
-* One-click bookmark tab
-  * Have a toggle for autoclosing tab if bookmarked (on by default)
+* One-click button to offload a tab (cut off a tab's memory usage)
 * Update landing page to include chrome web store / lemonsqueezy links
 

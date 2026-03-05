@@ -35,7 +35,9 @@
       "Bash(git commit:*)",
       "Bash(cd:*)",
       "Bash(git merge:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(vitest run:*)",
+      "Bash(biome check . && tsc --noEmit && vitest run 2>&1)"
     ]
   }
 }

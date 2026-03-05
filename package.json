@@ -1,6 +1,6 @@
 {
-  "name": "senbetsu",
-  "description": "manifest.json description",
+  "name": "Senbetsu - AI Tab Manager",
+  "description": "Organize your tabs by automatically grouping them with AI.",
   "private": true,
   "version": "1.0.0",
   "type": "module",
