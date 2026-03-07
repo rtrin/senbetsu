@@ -18,6 +18,7 @@
 * for nested folders... (think about this more)
 
 ## Doing:
+## NOTE: Keep solutions elegant and simple!
 
 ### marketing
 * Update landing page to include chrome web store / lemonsqueezy links
