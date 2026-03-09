@@ -23,6 +23,16 @@
 
 @layer base {
   :root {
+    --color-grey: #9ca3af;
+    --color-blue: #3b82f6;
+    --color-red: #ef4444;
+    --color-yellow: #eab308;
+    --color-green: #22c55e;
+    --color-pink: #ec4899;
+    --color-purple: #a855f7;
+    --color-cyan: #06b6d4;
+    --color-orange: #f97316;
+
     color-scheme: light dark;
     font-synthesis: none;
     text-rendering: optimizeLegibility;

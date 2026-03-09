@@ -13,6 +13,10 @@
 * Session saving & restoring (maintain a history of tab groups/folders that overrides local groupings)
 * Mark tabs to not be grouped (in the tab list)
 * Inline renaming of groups and bookmark folders
+* view subfolders
+* rename tabs
+* manage unopened tab groups on bookmark bar
+* have drag and drop be scrollable (user hovering tab near the top causes scroll up action, etc)
 
 ### folders
 * for nested folders... (think about this more)
@@ -28,13 +32,12 @@
 
 ### ui/ux (iterate slowly, build one feature + fully test at a time)
 
-* manage unopened tab groups on bookmark bar
-* have drag and drop be scrollable (user hovering tab near the top causes scroll up action, etc)
+* make it so input field and group tabs button appear below the toggle view header
+* make save group to folder and bookmark single tab buttons line up vertically
+
 * revise drag and drop to place exactly where user wants it to go (dragging in middle of two tabs in a specific group should place it exactly there)
 * rename bookmark folder to bookmark bar (should show all folders AND tabs)
-* make it so input field and group tabs button appear below the toggle view header
-* make folder and bookmark buttons line up vertically
-* rename tabs
+
 * Auto-grouping rules — Let users define rules like "all GitHub tabs go in Dev" so new
 tabs get grouped automatically without AI.**
 * Right-click context menu integration — "Add to group..." or "Save to bookmarks
