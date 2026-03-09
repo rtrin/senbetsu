@@ -39,6 +39,14 @@ vi.stubGlobal('chrome', {
   bookmarks: {
     create: vi.fn(),
     getChildren: vi.fn(async (id: string) => mockBookmarkNodes[id] ?? []),
+    get: vi.fn(async (id: string) => {
+      // Search all nodes for the given id (mock implementation)
+      for (const nodes of Object.values(mockBookmarkNodes)) {
+        const found = (nodes as Array<{ id: string }>).find((n) => n.id === id);
+        if (found) return [found];
+      }
+      return [];
+    }),
     removeTree: vi.fn(),
   },
   scripting: { executeScript: vi.fn() },
@@ -218,8 +226,8 @@ describe('handleOpenFolderAsGroup', () => {
 
     // Simulate tabs finishing load — triggers deferred discard
     for (const listener of [...onUpdatedListeners]) {
-      listener(50, { status: 'complete' });
-      listener(51, { status: 'complete' });
+      listener(50, { status: 'complete' } as unknown as chrome.tabs.OnUpdatedInfo);
+      listener(51, { status: 'complete' } as unknown as chrome.tabs.OnUpdatedInfo);
     }
     await vi.waitFor(() => {
       expect(chrome.tabs.discard).toHaveBeenCalledWith(50);

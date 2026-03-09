@@ -33,7 +33,7 @@
 * revise drag and drop to place exactly where user wants it to go (dragging in middle of two tabs in a specific group should place it exactly there)
 * rename bookmark folder to bookmark bar (should show all folders AND tabs)
 * make it so input field and group tabs button appear below the toggle view header
-* fix slowness with opening massive folders (find way to load titles/favicons without loading each page in memory)
+* make folder and bookmark buttons line up vertically
 * rename tabs
 * Auto-grouping rules — Let users define rules like "all GitHub tabs go in Dev" so new
 tabs get grouped automatically without AI.**

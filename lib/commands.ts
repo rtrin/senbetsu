@@ -315,7 +315,7 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
         return {
           id: folder.id,
           title: folder.title,
-          childCount: contents.length,
+          childCount: bookmarks.length,
           bookmarks,
         };
       }),
@@ -329,8 +329,13 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
 
 function waitForTabLoad(tabId: number): Promise<void> {
   return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve();
+    }, 30_000);
     const listener = (id: number, info: chrome.tabs.OnUpdatedInfo) => {
       if (id === tabId && info.status === 'complete') {
+        clearTimeout(timeout);
         chrome.tabs.onUpdated.removeListener(listener);
         resolve();
       }
@@ -358,8 +363,7 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
         tabIds: newTabIds as [number, ...number[]],
       });
 
-      const parent = await chrome.bookmarks.getChildren('1');
-      const folder = parent.find((n) => n.id === folderId);
+      const [folder] = await chrome.bookmarks.get(folderId);
       const title = folder?.title ?? 'Restored';
       const color = 'blue' as chrome.tabGroups.Color;
       await chrome.tabGroups.update(groupId, { title, color });
@@ -367,7 +371,9 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
 
     // Discard each tab after it loads to free memory (fire-and-forget)
     for (const id of newTabIds) {
-      waitForTabLoad(id).then(() => chrome.tabs.discard(id));
+      waitForTabLoad(id)
+        .then(() => chrome.tabs.discard(id))
+        .catch(() => {});
     }
 
     await chrome.bookmarks.removeTree(folderId);

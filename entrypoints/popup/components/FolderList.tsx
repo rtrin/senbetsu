@@ -101,7 +101,7 @@ export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }
 
                 {/* Expanded bookmark list */}
                 {isExpanded && folder.bookmarks && (
-                  <div className="ml-6 flex flex-col gap-0.5 border-white/10 light:border-black/10 border-l pl-2">
+                  <div className="ml-3.5 flex flex-col gap-0.5 border-white/10 light:border-black/10 border-l pl-1.5">
                     {folder.bookmarks.length === 0 ? (
                       <div className="px-2 py-1.5 text-[12px] opacity-40">Empty folder</div>
                     ) : (
@@ -129,10 +129,20 @@ export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }
                                 alt=""
                                 width={16}
                                 height={16}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  if (e.currentTarget.nextElementSibling) {
+                                    (
+                                      e.currentTarget.nextElementSibling as HTMLElement
+                                    ).style.display = 'block';
+                                  }
+                                }}
                               />
-                            ) : (
-                              <span className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)" />
-                            )}
+                            ) : null}
+                            <span
+                              className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)"
+                              style={{ display: faviconUrl ? 'none' : 'block' }}
+                            />
                             <span className="truncate text-[13px]">
                               {bookmark.title || bookmark.url}
                             </span>
