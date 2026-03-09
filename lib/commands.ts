@@ -329,18 +329,29 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
 
 function waitForTabLoad(tabId: number): Promise<void> {
   return new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      chrome.tabs.onUpdated.removeListener(listener);
-      resolve();
-    }, 30_000);
-    const listener = (id: number, info: chrome.tabs.OnUpdatedInfo) => {
-      if (id === tabId && info.status === 'complete') {
-        clearTimeout(timeout);
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
-      }
-    };
-    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs
+      .get(tabId)
+      .then((tab) => {
+        if (tab.status === 'complete') {
+          resolve();
+          return;
+        }
+
+        const timeout = setTimeout(() => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }, 30_000);
+
+        const listener = (id: number, info: chrome.tabs.OnUpdatedInfo) => {
+          if (id === tabId && info.status === 'complete') {
+            clearTimeout(timeout);
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve();
+          }
+        };
+        chrome.tabs.onUpdated.addListener(listener);
+      })
+      .catch(() => resolve()); // Resolve if tab doesn't exist anymore
   });
 }
 
