@@ -8,6 +8,7 @@ import {
   handleGetBookmarkFolders,
   handleGetMemoryUsage,
   handleMoveTabToGroup,
+  handleOpenBookmark,
   handleOpenFolderAsGroup,
   handleSaveAndGroup,
   handleSaveGroupToFolder,
@@ -68,6 +69,9 @@ export default defineBackground(() => {
         case 'CMD_GET_BOOKMARK_FOLDERS':
           responsePromise = handleGetBookmarkFolders();
           break;
+        case 'CMD_OPEN_BOOKMARK':
+          responsePromise = handleOpenBookmark(message.url);
+          break;
         default: {
           const _exhaustive: never = message;
           responsePromise = Promise.resolve({
@@ -83,18 +87,6 @@ export default defineBackground(() => {
     }
 
     return false;
-  });
-
-  // Resume suspended tabs when activated
-  const suspendedPath = chrome.runtime.getURL('suspended.html');
-  chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-    try {
-      const tab = await chrome.tabs.get(tabId);
-      if (tab.url?.startsWith(suspendedPath)) {
-        const url = new URL(tab.url).searchParams.get('url');
-        if (url) chrome.tabs.update(tabId, { url });
-      }
-    } catch {}
   });
 
   // Cleanup on tab removal

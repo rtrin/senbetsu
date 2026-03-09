@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from '../constants';
 
 const mockStore: Record<string, unknown> = {};
 const mockBookmarkNodes: Record<string, unknown[]> = {};
+const onUpdatedListeners: Array<(tabId: number, info: chrome.tabs.OnUpdatedInfo) => void> = [];
 
 vi.stubGlobal('chrome', {
   storage: {
@@ -20,6 +21,16 @@ vi.stubGlobal('chrome', {
     group: vi.fn(),
     query: vi.fn(),
     update: vi.fn(),
+    discard: vi.fn(),
+    onUpdated: {
+      addListener: vi.fn((fn: (tabId: number, info: chrome.tabs.OnUpdatedInfo) => void) => {
+        onUpdatedListeners.push(fn);
+      }),
+      removeListener: vi.fn((fn: (tabId: number, info: chrome.tabs.OnUpdatedInfo) => void) => {
+        const idx = onUpdatedListeners.indexOf(fn);
+        if (idx >= 0) onUpdatedListeners.splice(idx, 1);
+      }),
+    },
   },
   tabGroups: {
     update: vi.fn(),
@@ -32,10 +43,7 @@ vi.stubGlobal('chrome', {
   },
   scripting: { executeScript: vi.fn() },
   windows: { update: vi.fn() },
-  runtime: {
-    id: 'test-extension-id',
-    getURL: vi.fn((path: string) => `chrome-extension://test-extension-id/${path}`),
-  },
+  runtime: { id: 'test-extension-id' },
 });
 
 vi.mock('../ai', () => ({
@@ -57,9 +65,12 @@ vi.mock('../memory', () => ({
   measureTabMemory: vi.fn(),
 }));
 
-const { handleSaveGroupToFolder, handleGetBookmarkFolders, handleOpenFolderAsGroup } = await import(
-  '../commands'
-);
+const {
+  handleSaveGroupToFolder,
+  handleGetBookmarkFolders,
+  handleOpenFolderAsGroup,
+  handleOpenBookmark,
+} = await import('../commands');
 
 const mockFn = (fn: unknown) => fn as ReturnType<typeof vi.fn>;
 
@@ -83,6 +94,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   for (const key of Object.keys(mockStore)) delete mockStore[key];
   for (const key of Object.keys(mockBookmarkNodes)) delete mockBookmarkNodes[key];
+  onUpdatedListeners.length = 0;
 });
 
 describe('handleSaveGroupToFolder', () => {
@@ -147,15 +159,44 @@ describe('handleGetBookmarkFolders', () => {
     const result = await handleGetBookmarkFolders();
 
     expect(result.ok).toBe(true);
-    const folders = result.data as Array<{ id: string; title: string; childCount: number }>;
+    const folders = result.data as Array<{
+      id: string;
+      title: string;
+      childCount: number;
+      bookmarks: Array<{ id: string; title: string; url: string }>;
+    }>;
     expect(folders).toHaveLength(2);
-    expect(folders[0]).toEqual({ id: '10', title: 'Dev', childCount: 2 });
-    expect(folders[1]).toEqual({ id: '12', title: 'Work', childCount: 0 });
+    expect(folders[0]).toEqual({
+      id: '10',
+      title: 'Dev',
+      childCount: 2,
+      bookmarks: [
+        { id: '20', title: 'Page A', url: 'https://a.com' },
+        { id: '21', title: 'Page B', url: 'https://b.com' },
+      ],
+    });
+    expect(folders[1]).toEqual({
+      id: '12',
+      title: 'Work',
+      childCount: 0,
+      bookmarks: [],
+    });
+  });
+});
+
+describe('handleOpenBookmark', () => {
+  it('opens a URL in a new active tab', async () => {
+    mockFn(chrome.tabs.create).mockResolvedValueOnce({ id: 50 });
+
+    const result = await handleOpenBookmark('https://google.com');
+
+    expect(result.ok).toBe(true);
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://google.com', active: true });
   });
 });
 
 describe('handleOpenFolderAsGroup', () => {
-  it('opens bookmarks as suspended tabs, groups them, and deletes the folder', async () => {
+  it('creates tabs, groups them, and sets up deferred discard', async () => {
     mockBookmarkNodes['10'] = [
       { id: '20', title: 'Page A', url: 'https://a.com' },
       { id: '21', title: 'Page B', url: 'https://b.com' },
@@ -168,15 +209,22 @@ describe('handleOpenFolderAsGroup', () => {
     const result = await handleOpenFolderAsGroup('10');
 
     expect(result.ok).toBe(true);
-    const calls = mockFn(chrome.tabs.create).mock.calls;
-    expect(calls).toHaveLength(2);
-    expect(calls[0][0].url).toContain('suspended.html');
-    expect(calls[0][0].url).toContain(encodeURIComponent('https://a.com'));
-    expect(calls[0][0].active).toBe(false);
-    expect(calls[1][0].url).toContain(encodeURIComponent('https://b.com'));
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://a.com', active: false });
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://b.com', active: false });
     expect(chrome.tabs.group).toHaveBeenCalledWith({ tabIds: [50, 51] });
     expect(chrome.tabGroups.update).toHaveBeenCalledWith(5, { title: 'Dev', color: 'blue' });
+    expect(chrome.tabs.onUpdated.addListener).toHaveBeenCalledTimes(2);
     expect(chrome.bookmarks.removeTree).toHaveBeenCalledWith('10');
+
+    // Simulate tabs finishing load — triggers deferred discard
+    for (const listener of [...onUpdatedListeners]) {
+      listener(50, { status: 'complete' });
+      listener(51, { status: 'complete' });
+    }
+    await vi.waitFor(() => {
+      expect(chrome.tabs.discard).toHaveBeenCalledWith(50);
+      expect(chrome.tabs.discard).toHaveBeenCalledWith(51);
+    });
   });
 
   it('creates all tabs in parallel for large folders', async () => {
@@ -199,6 +247,7 @@ describe('handleOpenFolderAsGroup', () => {
     expect(chrome.tabs.group).toHaveBeenCalledWith({
       tabIds: Array.from({ length: 12 }, (_, i) => 100 + i),
     });
+    expect(chrome.tabs.onUpdated.addListener).toHaveBeenCalledTimes(12);
   });
 
   it('returns error for empty folder', async () => {

@@ -109,6 +109,11 @@ export interface CmdGetBookmarkFolders {
   type: 'CMD_GET_BOOKMARK_FOLDERS';
 }
 
+export interface CmdOpenBookmark {
+  type: 'CMD_OPEN_BOOKMARK';
+  url: string;
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
@@ -123,7 +128,8 @@ export type PopupCommand =
   | CmdBookmarkTab
   | CmdSaveGroupToFolder
   | CmdOpenFolderAsGroup
-  | CmdGetBookmarkFolders;
+  | CmdGetBookmarkFolders
+  | CmdOpenBookmark;
 
 export interface CommandResponse {
   ok: boolean;
@@ -135,10 +141,17 @@ export type ExtensionMessage = PopupCommand;
 
 // ─── Bookmark Folders ───────────────────────────────────────────
 
+export interface BookmarkItem {
+  id: string;
+  title: string;
+  url: string;
+}
+
 export interface BookmarkFolder {
   id: string;
   title: string;
   childCount: number;
+  bookmarks: BookmarkItem[];
 }
 
 // ─── Classification ──────────────────────────────────────────────

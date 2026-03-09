@@ -309,10 +309,14 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
     const result = await Promise.all(
       folders.map(async (folder) => {
         const contents = await chrome.bookmarks.getChildren(folder.id);
+        const bookmarks = contents
+          .filter((node) => node.url)
+          .map((node) => ({ id: node.id, title: node.title, url: node.url! }));
         return {
           id: folder.id,
           title: folder.title,
           childCount: contents.length,
+          bookmarks,
         };
       }),
     );
@@ -323,10 +327,16 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
   }
 }
 
-function suspendedUrl(url: string, title: string): string {
-  const suspended = chrome.runtime.getURL('suspended.html');
-  const params = new URLSearchParams({ url, title });
-  return `${suspended}?${params}`;
+function waitForTabLoad(tabId: number): Promise<void> {
+  return new Promise((resolve) => {
+    const listener = (id: number, info: chrome.tabs.OnUpdatedInfo) => {
+      if (id === tabId && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+  });
 }
 
 export async function handleOpenFolderAsGroup(folderId: string): Promise<CommandResponse> {
@@ -339,12 +349,7 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
     }
 
     const tabs = await Promise.all(
-      bookmarks.map((b) =>
-        chrome.tabs.create({
-          url: suspendedUrl(b.url!, b.title),
-          active: false,
-        }),
-      ),
+      bookmarks.map((b) => chrome.tabs.create({ url: b.url, active: false })),
     );
     const newTabIds = tabs.map((t) => t.id).filter((id): id is number => id !== undefined);
 
@@ -360,8 +365,22 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
       await chrome.tabGroups.update(groupId, { title, color });
     }
 
+    // Discard each tab after it loads to free memory (fire-and-forget)
+    for (const id of newTabIds) {
+      waitForTabLoad(id).then(() => chrome.tabs.discard(id));
+    }
+
     await chrome.bookmarks.removeTree(folderId);
 
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleOpenBookmark(url: string): Promise<CommandResponse> {
+  try {
+    await chrome.tabs.create({ url, active: true });
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };

@@ -144,6 +144,11 @@ function App() {
     window.close();
   }, []);
 
+  const handleOpenBookmark = useCallback((url: string) => {
+    sendCommand({ type: 'CMD_OPEN_BOOKMARK', url });
+    window.close();
+  }, []);
+
   const handleCloseTab = useCallback((tabId: number) => {
     sendCommand({ type: 'CMD_CLOSE_TAB', tabId });
   }, []);
@@ -251,6 +256,7 @@ function App() {
           folders={folders}
           isFetching={isFetchingFolders}
           onOpenFolder={handleOpenFolder}
+          onOpenBookmark={handleOpenBookmark}
         />
       )}
 
