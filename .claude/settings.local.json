@@ -40,7 +40,8 @@
       "Bash(biome check . && tsc --noEmit && vitest run 2>&1)",
       "WebFetch(domain:wxt.dev)",
       "Bash(npx wxt:*)",
-      "WebFetch(domain:biomejs.dev)"
+      "WebFetch(domain:biomejs.dev)",
+      "WebFetch(domain:groups.google.com)"
     ]
   }
 }

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const url = params.get('url') || '';
+      const title = params.get('title') || url;
+
+      document.title = title;
+
+      if (url) {
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.href = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`;
+        document.head.appendChild(favicon);
+      }
+    </script>
+  </head>
+  <body></body>
+</html>

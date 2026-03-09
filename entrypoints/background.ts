@@ -85,6 +85,18 @@ export default defineBackground(() => {
     return false;
   });
 
+  // Resume suspended tabs when activated
+  const suspendedPath = chrome.runtime.getURL('suspended.html');
+  chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab.url?.startsWith(suspendedPath)) {
+        const url = new URL(tab.url).searchParams.get('url');
+        if (url) chrome.tabs.update(tabId, { url });
+      }
+    } catch {}
+  });
+
   // Cleanup on tab removal
   chrome.tabs.onRemoved.addListener((tabId) => {
     removeTab(tabId);

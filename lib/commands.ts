@@ -323,6 +323,12 @@ export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
   }
 }
 
+function suspendedUrl(url: string, title: string): string {
+  const suspended = chrome.runtime.getURL('suspended.html');
+  const params = new URLSearchParams({ url, title });
+  return `${suspended}?${params}`;
+}
+
 export async function handleOpenFolderAsGroup(folderId: string): Promise<CommandResponse> {
   try {
     const children = await chrome.bookmarks.getChildren(folderId);
@@ -332,18 +338,21 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
       return { ok: false, error: 'Folder is empty' };
     }
 
-    const newTabIds: number[] = [];
-    for (const bookmark of bookmarks) {
-      const tab = await chrome.tabs.create({ url: bookmark.url, active: false });
-      if (tab.id) newTabIds.push(tab.id);
-    }
+    const tabs = await Promise.all(
+      bookmarks.map((b) =>
+        chrome.tabs.create({
+          url: suspendedUrl(b.url!, b.title),
+          active: false,
+        }),
+      ),
+    );
+    const newTabIds = tabs.map((t) => t.id).filter((id): id is number => id !== undefined);
 
     if (newTabIds.length > 0) {
       const groupId = await chrome.tabs.group({
         tabIds: newTabIds as [number, ...number[]],
       });
 
-      // Get folder title for the group name
       const parent = await chrome.bookmarks.getChildren('1');
       const folder = parent.find((n) => n.id === folderId);
       const title = folder?.title ?? 'Restored';

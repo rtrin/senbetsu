@@ -34,7 +34,6 @@
 * rename bookmark folder to bookmark bar (should show all folders AND tabs)
 * make it so input field and group tabs button appear below the toggle view header
 * fix slowness with opening massive folders (find way to load titles/favicons without loading each page in memory)
-* click on folder to show tabs in it
 * rename tabs
 * Auto-grouping rules — Let users define rules like "all GitHub tabs go in Dev" so new
 tabs get grouped automatically without AI.**

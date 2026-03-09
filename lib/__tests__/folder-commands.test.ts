@@ -32,7 +32,10 @@ vi.stubGlobal('chrome', {
   },
   scripting: { executeScript: vi.fn() },
   windows: { update: vi.fn() },
-  runtime: { id: 'test-extension-id' },
+  runtime: {
+    id: 'test-extension-id',
+    getURL: vi.fn((path: string) => `chrome-extension://test-extension-id/${path}`),
+  },
 });
 
 vi.mock('../ai', () => ({
@@ -152,7 +155,7 @@ describe('handleGetBookmarkFolders', () => {
 });
 
 describe('handleOpenFolderAsGroup', () => {
-  it('opens bookmarks as tabs, groups them, and deletes the folder', async () => {
+  it('opens bookmarks as suspended tabs, groups them, and deletes the folder', async () => {
     mockBookmarkNodes['10'] = [
       { id: '20', title: 'Page A', url: 'https://a.com' },
       { id: '21', title: 'Page B', url: 'https://b.com' },
@@ -165,11 +168,37 @@ describe('handleOpenFolderAsGroup', () => {
     const result = await handleOpenFolderAsGroup('10');
 
     expect(result.ok).toBe(true);
-    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://a.com', active: false });
-    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://b.com', active: false });
+    const calls = mockFn(chrome.tabs.create).mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[0][0].url).toContain('suspended.html');
+    expect(calls[0][0].url).toContain(encodeURIComponent('https://a.com'));
+    expect(calls[0][0].active).toBe(false);
+    expect(calls[1][0].url).toContain(encodeURIComponent('https://b.com'));
     expect(chrome.tabs.group).toHaveBeenCalledWith({ tabIds: [50, 51] });
     expect(chrome.tabGroups.update).toHaveBeenCalledWith(5, { title: 'Dev', color: 'blue' });
     expect(chrome.bookmarks.removeTree).toHaveBeenCalledWith('10');
+  });
+
+  it('creates all tabs in parallel for large folders', async () => {
+    const bookmarks = Array.from({ length: 12 }, (_, i) => ({
+      id: String(200 + i),
+      title: `Page ${i}`,
+      url: `https://example.com/${i}`,
+    }));
+    mockBookmarkNodes['10'] = bookmarks;
+    mockBookmarkNodes['1'] = [{ id: '10', title: 'Big Folder', parentId: '1' }];
+
+    let tabIdCounter = 100;
+    mockFn(chrome.tabs.create).mockImplementation(async () => ({ id: tabIdCounter++ }));
+    mockFn(chrome.tabs.group).mockResolvedValue(5);
+
+    const result = await handleOpenFolderAsGroup('10');
+
+    expect(result.ok).toBe(true);
+    expect(chrome.tabs.create).toHaveBeenCalledTimes(12);
+    expect(chrome.tabs.group).toHaveBeenCalledWith({
+      tabIds: Array.from({ length: 12 }, (_, i) => 100 + i),
+    });
   });
 
   it('returns error for empty folder', async () => {
