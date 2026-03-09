@@ -37,7 +37,10 @@
       "Bash(git merge:*)",
       "Bash(git branch:*)",
       "Bash(vitest run:*)",
-      "Bash(biome check . && tsc --noEmit && vitest run 2>&1)"
+      "Bash(biome check . && tsc --noEmit && vitest run 2>&1)",
+      "WebFetch(domain:wxt.dev)",
+      "Bash(npx wxt:*)",
+      "WebFetch(domain:biomejs.dev)"
     ]
   }
 }

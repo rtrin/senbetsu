@@ -1,7 +1,14 @@
+import { clsx } from 'clsx';
 import { useState } from 'react';
 import { FREE_DAILY_LIMIT } from '@/lib/constants';
 import { storage } from '@/lib/storage';
 import type { AppSettings, CommandResponse, PopupCommand } from '@/lib/types';
+
+const tierBadgeClasses: Record<string, string> = {
+  free: 'text-(--color-grey) bg-white/10 light:bg-black/5',
+  pro: 'text-blue-500 bg-blue-500/15',
+  byok: 'text-violet-400 bg-violet-500/15',
+};
 
 interface SettingsPanelProps {
   settings: AppSettings;
@@ -90,31 +97,45 @@ export function SettingsPanel({
     }
   };
 
+  const inputClass =
+    'flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 placeholder:text-(--color-grey) focus:border-blue-500 focus:bg-white/10 light:border-black/15 light:bg-white light:focus:border-blue-500';
+
+  const btnPrimarySm =
+    'cursor-pointer rounded-lg border-0 bg-blue-500 px-3 py-1.5 font-sans text-xs font-semibold text-white transition-[opacity,background-color] duration-150 disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-blue-600';
+
+  const btnGhost =
+    'cursor-pointer rounded-lg border-0 bg-transparent px-3 py-1.5 font-sans text-xs font-semibold text-(--color-grey) transition-[opacity,background-color] duration-150 disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:text-white/87 light:enabled:hover:text-(--color-text-light)';
+
   return (
-    <section className="settings-panel">
-      {/* ── Tier & Usage ── */}
-      <div className="settings-section">
-        <div className="settings-tier">
-          <span className="settings-tier__label">Current Plan</span>
-          <span className={`settings-tier__badge settings-tier__badge--${settings.tier}`}>
+    <section className="flex flex-col gap-4">
+      {/* Tier & Usage */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="font-medium text-[13px]">Current Plan</span>
+          <span
+            className={clsx(
+              'rounded px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider',
+              tierBadgeClasses[settings.tier],
+            )}
+          >
             {tierLabel}
           </span>
         </div>
         {settings.tier === 'free' ? (
-          <div className="settings-usage">
+          <div className="text-(--color-grey) text-xs">
             {usageCount} / {FREE_DAILY_LIMIT} free usages today
           </div>
         ) : (
-          <div className="settings-usage">Unlimited usages</div>
+          <div className="text-(--color-grey) text-xs">Unlimited usages</div>
         )}
       </div>
 
-      {/* ── Upgrade Links (free tier only) ── */}
+      {/* Upgrade Links (free tier only) */}
       {settings.tier === 'free' && (
-        <div className="settings-section">
+        <div className="flex flex-col gap-2">
           <button
             type="button"
-            className="btn btn--primary btn--sm settings-upgrade-btn"
+            className="w-full cursor-pointer rounded-lg border-0 bg-blue-500 px-3 py-1.5 text-center font-sans font-semibold text-white text-xs transition-[opacity,background-color] duration-150 enabled:hover:bg-blue-600"
             onClick={() =>
               chrome.tabs.create({
                 url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c08ff5cc-23c0-4f36-85f9-0c5eb89d3e9a',
@@ -125,7 +146,7 @@ export function SettingsPanel({
           </button>
           <button
             type="button"
-            className="btn btn--ghost settings-upgrade-btn"
+            className={clsx(btnGhost, 'w-full text-center')}
             onClick={() =>
               chrome.tabs.create({
                 url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c360fa2b-dda6-4d25-a51b-4badc8ee62c5',
@@ -137,15 +158,17 @@ export function SettingsPanel({
         </div>
       )}
 
-      {/* ── License Key ── */}
-      <div className="settings-section">
-        <h3 className="settings-section__title">License Key</h3>
+      {/* License Key */}
+      <div className="flex flex-col gap-2">
+        <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+          License Key
+        </h3>
         {settings.licenseKey ? (
-          <div className="settings-license-active">
-            <span className="settings-license-active__status">{tierLabel} license active</span>
+          <div className="flex items-center justify-between rounded-md bg-white/4 light:bg-black/3 p-2">
+            <span className="font-medium text-[13px]">{tierLabel} license active</span>
             <button
               type="button"
-              className="btn btn--ghost btn--danger"
+              className={clsx(btnGhost, 'enabled:hover:text-(--color-red)')}
               onClick={handleDeactivate}
               disabled={isDeactivating}
             >
@@ -153,17 +176,17 @@ export function SettingsPanel({
             </button>
           </div>
         ) : (
-          <div className="settings-license-input">
+          <div className="flex gap-2">
             <input
               type="text"
-              className="prompt-input"
+              className={inputClass}
               placeholder="Enter license key"
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value)}
             />
             <button
               type="button"
-              className="btn btn--primary btn--sm"
+              className={btnPrimarySm}
               onClick={handleActivate}
               disabled={isActivating || !licenseKey.trim()}
             >
@@ -173,31 +196,33 @@ export function SettingsPanel({
         )}
       </div>
 
-      {/* ── BYOK API Key (only for byok tier) ── */}
+      {/* BYOK API Key (only for byok tier) */}
       {settings.tier === 'byok' && (
-        <div className="settings-section">
-          <h3 className="settings-section__title">OpenAI API Key</h3>
-          <div className="settings-apikey-input">
+        <div className="flex flex-col gap-2">
+          <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+            OpenAI API Key
+          </h3>
+          <div className="flex gap-2">
             <input
               type={showApiKey ? 'text' : 'password'}
-              className="prompt-input"
+              className={inputClass}
               placeholder="sk-..."
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
             />
             <button
               type="button"
-              className="btn btn--ghost"
+              className={btnGhost}
               onClick={() => setShowApiKey(!showApiKey)}
               title={showApiKey ? 'Hide' : 'Show'}
             >
               {showApiKey ? 'Hide' : 'Show'}
             </button>
           </div>
-          <div className="settings-apikey-actions">
+          <div className="flex gap-2">
             <button
               type="button"
-              className="btn btn--primary btn--sm"
+              className={btnPrimarySm}
               onClick={handleSaveApiKey}
               disabled={isSavingKey || !apiKey.trim()}
             >
@@ -206,7 +231,7 @@ export function SettingsPanel({
             {settings.openaiApiKey && (
               <button
                 type="button"
-                className="btn btn--ghost btn--danger"
+                className={clsx(btnGhost, 'enabled:hover:text-(--color-red)')}
                 onClick={handleRemoveApiKey}
                 disabled={isSavingKey}
               >
@@ -217,33 +242,49 @@ export function SettingsPanel({
         </div>
       )}
 
-      {error && <div className="settings-error">{error}</div>}
+      {error && (
+        <div className="rounded-md bg-red-500/10 light:bg-red-500/8 px-3 py-2 text-(--color-red) text-xs">
+          {error}
+        </div>
+      )}
 
-      {/* ── Bookmarks ── */}
-      <div className="settings-section">
-        <h3 className="settings-section__title">Bookmarks</h3>
-        <div className="toggle-row">
-          <span className="toggle-row__label">Auto-close tabs after saving</span>
+      {/* Bookmarks */}
+      <div className="flex flex-col gap-2">
+        <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+          Bookmarks
+        </h3>
+        <div className="flex items-center justify-between border-white/8 light:border-black/8 border-y py-2">
+          <span className="font-medium text-[13px]">Auto-close tabs after saving</span>
           <button
             type="button"
-            className={`toggle ${bookmarkAutoClose ? 'toggle--on' : ''}`}
+            className={clsx(
+              'relative h-[22px] w-[40px] cursor-pointer rounded-[11px] border-0 p-0 transition-colors duration-200',
+              bookmarkAutoClose ? 'bg-blue-500' : 'bg-white/15 light:bg-black/15',
+            )}
             onClick={handleToggleAutoClose}
           >
-            <span className="toggle__knob" />
+            <span
+              className={clsx(
+                'absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full bg-white transition-transform duration-200',
+                bookmarkAutoClose && 'translate-x-[18px]',
+              )}
+            />
           </button>
         </div>
       </div>
 
-      {/* ── Tips ── */}
-      <div className="settings-section settings-tips">
-        <h3 className="settings-section__title">Tips</h3>
-        <div className="settings-tip">
-          <span className="settings-tip__icon">⌨️</span>
-          <p className="settings-tip__text">
+      {/* Tips */}
+      <div className="flex flex-col gap-2 border-white/10 light:border-black/10 border-t pt-4">
+        <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+          Tips
+        </h3>
+        <div className="flex items-start gap-2">
+          <span className="shrink-0 text-[14px] leading-[1.5]">⌨️</span>
+          <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
             Set a keyboard shortcut to open Senbetsu instantly.{' '}
             <button
               type="button"
-              className="settings-tip__link"
+              className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
               onClick={() => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })}
             >
               Open shortcut settings →
@@ -251,13 +292,13 @@ export function SettingsPanel({
           </p>
         </div>
         {settings.tier === 'byok' && (
-          <div className="settings-tip">
-            <span className="settings-tip__icon">🔑</span>
-            <p className="settings-tip__text">
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 text-[14px] leading-[1.5]">🔑</span>
+            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
               Need an OpenAI key?{' '}
               <button
                 type="button"
-                className="settings-tip__link"
+                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
                 onClick={() => chrome.tabs.create({ url: 'https://platform.openai.com/api-keys' })}
               >
                 Get one at platform.openai.com →

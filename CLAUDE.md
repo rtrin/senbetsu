@@ -58,4 +58,14 @@ public/                     # Static assets (icons, images)
 
 ## Mistakes Log
 
-<!-- Add mistakes here as they happen, so Claude doesn't repeat them -->
+When you encounter an error during development — build failures, type errors, wrong API usage, incorrect assumptions about the codebase, flaky tests, Chrome extension gotchas — log it here immediately. Format:
+
+```
+- **[category]**: Brief description of the mistake and the fix/lesson learned
+```
+
+Categories: `build`, `types`, `chrome-api`, `testing`, `lint`, `logic`, `config`
+
+Review this section before starting any task to avoid repeating past mistakes.
+
+<!-- Log mistakes below this line -->

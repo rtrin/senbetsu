@@ -26,10 +26,20 @@
 ### memory
 * Critical: browser crashes when trying to group too many tabs at once. (might investigate this more, because I tried again with 30+ tabs but didn't crash?)
 
-### ui/ux
+### ui/ux (iterate slowly, build one feature + fully test at a time)
 
 * manage unopened tab groups on bookmark bar
 * have drag and drop be scrollable (user hovering tab near the top causes scroll up action, etc)
 * revise drag and drop to place exactly where user wants it to go (dragging in middle of two tabs in a specific group should place it exactly there)
 * rename bookmark folder to bookmark bar (should show all folders AND tabs)
 * make it so input field and group tabs button appear below the toggle view header
+* fix slowness with opening massive folders (find way to load titles/favicons without loading each page in memory)
+* click on folder to show tabs in it
+* rename tabs
+* Auto-grouping rules — Let users define rules like "all GitHub tabs go in Dev" so new
+tabs get grouped automatically without AI.**
+* Right-click context menu integration — "Add to group..." or "Save to bookmarks
+folder" from the page itself, not just the popup.
+* Pinned tab management — Pinned tabs are a blind spot in most tab managers. Let
+users include/exclude them from grouping.
+* Some kind of "exclude" button for groups (when pressing group tabs)

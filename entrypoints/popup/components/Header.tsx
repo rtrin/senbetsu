@@ -4,18 +4,18 @@ interface HeaderProps {
 
 export function Header({ tabCount }: HeaderProps) {
   return (
-    <header className="popup-header">
-      <h1 className="popup-header__title">senbetsu</h1>
-      <div className="popup-header__actions">
+    <header className="flex items-baseline justify-between">
+      <h1 className="font-bold text-lg tracking-tight">senbetsu</h1>
+      <div className="flex items-baseline gap-3">
         <a
           href="https://forms.gle/byoqKeuAcLdpdamA7"
           target="_blank"
           rel="noreferrer"
-          className="popup-header__link"
+          className="font-medium text-(--color-grey) text-[11px] no-underline transition-colors duration-150 hover:text-white/87 light:hover:text-(--color-text-light)"
         >
           Feedback
         </a>
-        <span className="popup-header__count">
+        <span className="text-(--color-grey) text-xs">
           {tabCount} tab{tabCount !== 1 ? 's' : ''} open
         </span>
       </div>

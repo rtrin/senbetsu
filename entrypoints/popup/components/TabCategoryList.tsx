@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { useState } from 'react';
 import { isClassifiableUrl } from '@/lib/utils';
 import { TabItem } from './TabItem';
@@ -32,7 +33,6 @@ export function TabCategoryList({
   const validTabs = tabs.filter((t) => t.id && t.url);
   if (validTabs.length === 0) return null;
 
-  // Group tabs by their live Chrome groupId
   const byGroup = new Map<number, chrome.tabs.Tab[]>();
   for (const tab of validTabs) {
     const gid = tab.groupId ?? -1;
@@ -41,17 +41,17 @@ export function TabCategoryList({
     byGroup.set(gid, existing);
   }
 
-  // Separate grouped and ungrouped
   const ungrouped = byGroup.get(-1) ?? [];
   byGroup.delete(-1);
 
   return (
     <section>
-      <div className="section-header">
-        <h2 className="section-title">Open Tabs</h2>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+          Open Tabs
+        </h2>
       </div>
 
-      {/* Render Chrome tab groups */}
       {Array.from(byGroup.entries()).map(([groupId, groupTabs]) => {
         const group = groups.get(groupId);
         const groupName = group?.title || 'Unnamed Group';
@@ -62,7 +62,7 @@ export function TabCategoryList({
             {/* biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone */}
             <div
               key={groupId}
-              className={`tab-group ${dragOverGroupId === groupId ? 'tab-group--drop-target' : ''}`}
+              className={clsx('mb-3', dragOverGroupId === groupId && 'drop-target')}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOverGroupId(groupId);
@@ -81,13 +81,16 @@ export function TabCategoryList({
                 }
               }}
             >
-              <div className="tab-group__header">
-                <span className="tab-group__dot" style={{ backgroundColor: colorVar }} />
-                <span className="tab-group__name">{groupName}</span>
-                <span className="tab-group__count">{groupTabs.length}</span>
+              <div className="group/header mb-1 flex items-center gap-1.5 py-1">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: colorVar }}
+                />
+                <span className="flex-1 font-semibold text-xs">{groupName}</span>
+                <span className="text-(--color-grey) text-[11px]">{groupTabs.length}</span>
                 <button
                   type="button"
-                  className="action-btn action-btn--save-folder"
+                  className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/header:opacity-100"
                   onClick={() =>
                     onSaveGroupToFolder(
                       groupTabs.map((t) => t.id!),
@@ -113,7 +116,7 @@ export function TabCategoryList({
                 </button>
                 <button
                   type="button"
-                  className="close-btn close-btn--group"
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) text-base leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
                   onClick={() => onCloseGroup(groupTabs.map((t) => t.id!))}
                   title={`Close all ${groupTabs.length} tabs in "${groupName}"`}
                 >
@@ -138,12 +141,11 @@ export function TabCategoryList({
         );
       })}
 
-      {/* Render ungrouped tabs */}
       {ungrouped.length > 0 && (
         <>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone */}
           <div
-            className={`tab-group tab-group--ungrouped ${dragOverGroupId === -1 ? 'tab-group--drop-target' : ''}`}
+            className={clsx('mb-3', dragOverGroupId === -1 && 'drop-target')}
             onDragOver={(e) => {
               e.preventDefault();
               setDragOverGroupId(-1);
@@ -162,13 +164,13 @@ export function TabCategoryList({
               }
             }}
           >
-            <div className="tab-group__header">
-              <span className="tab-group__dot tab-group__dot--dashed" />
-              <span className="tab-group__name">Ungrouped</span>
+            <div className="group/header mb-1 flex items-center gap-1.5 py-1">
+              <span className="h-2 w-2 shrink-0 rounded-full border-(--color-grey) border-[1.5px] border-dashed bg-transparent" />
+              <span className="flex-1 font-semibold text-xs">Ungrouped</span>
               {ungrouped.some((t) => isClassifiableUrl(t.url)) && (
                 <button
                   type="button"
-                  className="btn btn--sm btn--primary ungrouped-action"
+                  className="mr-2 ml-auto cursor-pointer rounded-lg border-0 bg-blue-500 px-2 py-1 font-sans font-semibold text-[11px] text-white transition-[opacity,background-color] duration-150 enabled:hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() =>
                     onCleanUp(ungrouped.filter((t) => isClassifiableUrl(t.url)).map((t) => t.id!))
                   }
@@ -179,7 +181,7 @@ export function TabCategoryList({
               )}
               <button
                 type="button"
-                className="close-btn close-btn--group"
+                className="flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) text-base leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
                 onClick={() => onCloseGroup(ungrouped.map((t) => t.id!))}
                 title="Close all ungrouped tabs"
               >

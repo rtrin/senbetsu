@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants';
 import { storage } from '@/lib/storage';
 import type {
@@ -7,7 +8,6 @@ import type {
   PopupCommand,
   TabMemoryInfo,
 } from '@/lib/types';
-import './App.css';
 
 import { FolderList } from './components/FolderList';
 import { Header } from './components/Header';
@@ -195,45 +195,40 @@ function App() {
     [fetchFolders, refreshLiveTabs],
   );
 
+  const viewToggleBtn = (view: typeof activeView, label: string, onClick: () => void) => (
+    <button
+      type="button"
+      className={clsx(
+        'flex-1 cursor-pointer rounded-md border-0 bg-transparent py-1.5 font-sans font-semibold text-(--color-grey) text-xs transition-all duration-200',
+        'hover:text-white/87 light:hover:text-(--color-text-light)',
+        activeView === view &&
+          'bg-white/10 light:bg-white light:text-(--color-text-light) text-white light:shadow-black/10 shadow-sm',
+      )}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="popup">
+    <div className="flex flex-col gap-3 p-4">
       <Header tabCount={liveTabs.length} />
 
       {activeView !== 'settings' && activeView !== 'folders' && (
         <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
       )}
 
-      {groupingError && <div className="grouping-error">{groupingError}</div>}
+      {groupingError && (
+        <div className="rounded-md bg-red-500/10 light:bg-red-500/8 px-3 py-2 text-(--color-red) text-xs">
+          {groupingError}
+        </div>
+      )}
 
-      <div className="view-toggle">
-        <button
-          type="button"
-          className={`toggle-btn ${activeView === 'groups' ? 'active' : ''}`}
-          onClick={() => setActiveView('groups')}
-        >
-          Groups
-        </button>
-        <button
-          type="button"
-          className={`toggle-btn ${activeView === 'folders' ? 'active' : ''}`}
-          onClick={handleSwitchToFolders}
-        >
-          Folders
-        </button>
-        <button
-          type="button"
-          className={`toggle-btn ${activeView === 'memory' ? 'active' : ''}`}
-          onClick={handleSwitchToMemory}
-        >
-          Memory
-        </button>
-        <button
-          type="button"
-          className={`toggle-btn ${activeView === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveView('settings')}
-        >
-          Settings
-        </button>
+      <div className="mb-2 flex rounded-lg bg-white/5 light:bg-black/5 p-1">
+        {viewToggleBtn('groups', 'Groups', () => setActiveView('groups'))}
+        {viewToggleBtn('folders', 'Folders', handleSwitchToFolders)}
+        {viewToggleBtn('memory', 'Memory', handleSwitchToMemory)}
+        {viewToggleBtn('settings', 'Settings', () => setActiveView('settings'))}
       </div>
 
       {activeView === 'groups' && (

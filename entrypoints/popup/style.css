@@ -1,21 +1,8 @@
-/* ─── Base Reset & Popup Sizing ──────────────────────────────── */
+@import "tailwindcss";
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-size: 14px;
+@custom-variant light (@media (prefers-color-scheme: light));
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #1a1a2e;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* Category colors */
+@theme {
   --color-grey: #9ca3af;
   --color-blue: #3b82f6;
   --color-red: #ef4444;
@@ -25,23 +12,54 @@
   --color-purple: #a855f7;
   --color-cyan: #06b6d4;
   --color-orange: #f97316;
+
+  --color-surface: #1a1a2e;
+  --color-surface-light: #fafafa;
+  --color-text: rgba(255, 255, 255, 0.87);
+  --color-text-light: #1a1a2e;
+
+  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  width: 375px;
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #1a1a2e;
-    background-color: #fafafa;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    width: 375px;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+  }
+
+  @media (prefers-color-scheme: light) {
+    body {
+      color: var(--color-text-light);
+      background-color: var(--color-surface-light);
+    }
+  }
+}
+
+@layer utilities {
+  .drop-target {
+    outline: 2px dashed var(--color-blue);
+    outline-offset: -2px;
+    border-radius: 6px;
   }
 }

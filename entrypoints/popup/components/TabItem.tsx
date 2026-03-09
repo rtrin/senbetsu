@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 export interface SharedTabItemProps {
   id: number;
   url: string;
@@ -25,7 +27,7 @@ export function TabItem({
     <>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone */}
       <div
-        className="tab-item-row"
+        className="group/row flex cursor-grab items-center rounded-md transition-colors duration-150 hover:bg-white/6 light:hover:bg-black/4 active:cursor-grabbing"
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData('text/plain', id.toString());
@@ -33,22 +35,34 @@ export function TabItem({
       >
         <button
           type="button"
-          className={`tab-item ${isActive ? 'tab-item--active' : ''}`}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-2 py-1.5 text-left font-sans text-inherit"
           onClick={() => onSwitchTab(id)}
           title={url}
         >
           {favIconUrl ? (
-            <img className="tab-item__favicon" src={favIconUrl} alt="" width={16} height={16} />
+            <img
+              className="h-4 w-4 shrink-0 rounded-[2px]"
+              src={favIconUrl}
+              alt=""
+              width={16}
+              height={16}
+            />
           ) : (
-            <span className="tab-item__favicon-fallback" />
+            <span className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)" />
           )}
-          <span className="tab-item__title">{title || url}</span>
-          {!isHttp && <span className="tab-item__badge">system</span>}
+          <span className={clsx('flex-1 truncate text-[13px]', isActive && 'font-semibold')}>
+            {title || url}
+          </span>
+          {!isHttp && (
+            <span className="ml-auto shrink-0 rounded bg-white/10 light:bg-black/5 px-1 py-0.5 text-(--color-grey) text-[9px] uppercase tracking-wider">
+              system
+            </span>
+          )}
         </button>
         {isHttp && (
           <button
             type="button"
-            className="action-btn action-btn--bookmark"
+            className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/row:opacity-100"
             onClick={() => onBookmarkTab(id)}
             title="Bookmark tab"
           >
@@ -70,7 +84,7 @@ export function TabItem({
         )}
         <button
           type="button"
-          className="close-btn close-btn--tab"
+          className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/row:opacity-100"
           onClick={() => onCloseTab(id)}
           title="Close tab"
         >

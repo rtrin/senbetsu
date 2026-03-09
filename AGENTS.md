@@ -59,6 +59,14 @@ vitest run      # Tests
 tsc --noEmit    # Type check
 ```
 
+## Error Logging
+
+When you hit an error (build failure, type error, wrong API usage, test failure, Chrome extension gotcha, incorrect assumption), log it in the **Mistakes Log** section of `CLAUDE.md`. This builds a knowledge base so the same mistakes aren't repeated across sessions.
+
+- Log immediately when the error occurs, not after the session
+- Include the category, what went wrong, and the fix/lesson
+- Review the Mistakes Log at the start of every task
+
 ## Commit Practices
 
 - Atomic commits (one logical change per commit)
