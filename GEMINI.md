@@ -50,6 +50,7 @@ Utilize specialized capabilities in `.agents/skills/`:
 - Use `view_file` to understand context before editing
 - Use `grep_search` to find related code across the project
 - **Verification**: Run `biome check .` and verify no regressions after ANY edit
+- **Git Commands**: Always require user approval before running ANY `git` commands (e.g. `git commit`, `git push`, etc). NEVER auto-run git commands.
 
 ### API Integration (Gemini SDK)
 

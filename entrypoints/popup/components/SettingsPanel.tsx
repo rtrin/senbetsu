@@ -138,7 +138,7 @@ export function SettingsPanel({
             className="w-full cursor-pointer rounded-lg border-0 bg-blue-500 px-3 py-1.5 text-center font-sans font-semibold text-white text-xs transition-[opacity,background-color] duration-150 enabled:hover:bg-blue-600"
             onClick={() =>
               chrome.tabs.create({
-                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c08ff5cc-23c0-4f36-85f9-0c5eb89d3e9a',
+                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/6d84a106-1af7-462c-894c-17aff81d0b47',
               })
             }
           >
@@ -149,7 +149,7 @@ export function SettingsPanel({
             className={clsx(btnGhost, 'w-full text-center')}
             onClick={() =>
               chrome.tabs.create({
-                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/c360fa2b-dda6-4d25-a51b-4badc8ee62c5',
+                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/26f29df0-6431-4c43-9eee-ca107f88323a',
               })
             }
           >
