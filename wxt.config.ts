@@ -7,7 +7,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ['tabs', 'tabGroups', 'storage', 'scripting', 'bookmarks'],
-    host_permissions: ['<all_urls>'],
+    permissions: ['tabs', 'tabGroups', 'storage', 'bookmarks'],
+    optional_permissions: ['scripting'],
+    optional_host_permissions: ['<all_urls>'],
   },
 });

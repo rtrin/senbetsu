@@ -8,9 +8,9 @@ import type {
 } from './types';
 
 function getSystemPrompt(userPrompt?: string, existingGroups?: string[]): string {
-  let base = `You are an intelligent tab organizer. You will receive a list of browser tabs with their URLs, titles, and page content.
+  let base = `You are an intelligent tab organizer. You will receive a list of browser tabs with their URLs and titles.
 
-Your job is to group them into logical clusters and give each group a short, descriptive name based on the actual content (e.g. "React Libraries", "Job Applications", "Cooking Recipes").
+Your job is to group them into logical clusters and give each group a short, descriptive name (e.g. "React Libraries", "Job Applications", "Cooking Recipes").
 
 Rules:
 - Aim for 3-7 groups total
@@ -32,22 +32,8 @@ Respond strictly in JSON format:
   return base;
 }
 
-const MAX_CONTENT_CHARS = 60_000;
-
 function buildTabList(tabs: TabClassificationInput[]): string {
-  let totalContent = 0;
-  return tabs
-    .map((t) => {
-      const lines = [`Tab ID: ${t.tabId}`, `URL: ${t.url}`, `Title: ${t.title}`];
-      const snippet = t.bodyText.trim();
-      if (snippet && totalContent < MAX_CONTENT_CHARS) {
-        const allowed = Math.min(snippet.length, MAX_CONTENT_CHARS - totalContent);
-        lines.push(`Content: ${snippet.slice(0, allowed)}`);
-        totalContent += allowed;
-      }
-      return lines.join('\n');
-    })
-    .join('\n---\n');
+  return tabs.map((t) => `Tab ID: ${t.tabId}\nURL: ${t.url}\nTitle: ${t.title}`).join('\n---\n');
 }
 
 export async function classifyTabs(

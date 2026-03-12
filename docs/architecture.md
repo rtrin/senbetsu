@@ -12,14 +12,12 @@ senbetsu/
 ├── docs/                   # Project documentation, plans, and features
 ├── entrypoints/            # WXT extension entry points
 │   ├── background.ts       # Service worker (Central controller)
-│   ├── content.ts          # Page script (Metadata extractor)
 │   └── popup/              # Extension popup UI (React + CSS)
 ├── lib/                    # Shared business logic and utilities
 │   ├── ai.ts               # OpenAI API integration
 │   ├── commands.ts         # Actions fired from the popup
 │   ├── constants.ts        # Shared constants (Categories, Colors, Keys)
 │   ├── grouping.ts         # Logic for interacting with Chrome Tab Groups
-│   ├── metadata.ts         # HTML metadata extraction logic
 │   ├── storage.ts          # Chrome Storage wrappers for settings & sessions
 │   ├── types.ts            # Global TypeScript interfaces
 │   └── utils.ts            # General utility functions
@@ -31,18 +29,10 @@ senbetsu/
 
 ## 3. Core Components & Data Flow
 
-### A. Information Extraction (`entrypoints/content.ts` & `lib/metadata.ts`)
-A content script runs on every page visited. It utilizes `extractPageMetadata()` to gather context text:
-- URL & Title
-- Standard `<meta name="description">`
-- OpenGraph tags (`og:title`, `og:description`, `og:site_name`)
-
-**Data Flow:** The extracted metadata is sent via a `PAGE_METADATA` message to the background script.
-
-### B. Central Orchestration (`entrypoints/background.ts`)
+### A. Central Orchestration (`entrypoints/background.ts`)
 The Background Service Worker serves as the operational brain of the extension.
 - **Debounce Queue:** Rapid fire tab opens are batched using a debounce timer (`CLASSIFICATION_DEBOUNCE_MS`), preventing rate limits when hitting the AI API.
-- **Message Listener:** Listens for incoming `PAGE_METADATA` messages from the content script and `CMD_*` events from the popup.
+- **Message Listener:** Listens for `CMD_*` events from the popup.
 - **Lifecycle Management:** Cleans up memory maps when native tabs or windows are closed via `chrome.tabs.onRemoved` and `chrome.windows.onRemoved`.
 
 ### C. AI Classification Engine (`lib/ai.ts`)

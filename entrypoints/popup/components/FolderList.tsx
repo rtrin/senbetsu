@@ -6,9 +6,18 @@ interface FolderListProps {
   isFetching: boolean;
   onOpenFolder: (folderId: string) => void;
   onOpenBookmark: (url: string) => void;
+  onDeleteFolder: (folderId: string) => void;
+  onDeleteBookmark: (bookmarkId: string, folderId: string) => void;
 }
 
-export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }: FolderListProps) {
+export function FolderList({
+  folders,
+  isFetching,
+  onOpenFolder,
+  onOpenBookmark,
+  onDeleteFolder,
+  onDeleteBookmark,
+}: FolderListProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const toggleFolder = (folderId: string) => {
@@ -47,7 +56,7 @@ export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }
             return (
               <div key={folder.id} className="flex flex-col gap-0.5">
                 {/* Folder header row */}
-                <div className="flex items-center justify-between rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-white/5 light:hover:bg-black/5">
+                <div className="group/header flex items-center justify-between rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-white/5 light:hover:bg-black/5">
                   <button
                     type="button"
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent text-left font-sans text-inherit"
@@ -97,6 +106,14 @@ export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }
                   >
                     Open
                   </button>
+                  <button
+                    type="button"
+                    className="flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) text-base leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
+                    onClick={() => onDeleteFolder(folder.id)}
+                    title={`Delete "${folder.title}" folder`}
+                  >
+                    ×
+                  </button>
                 </div>
 
                 {/* Expanded bookmark list */}
@@ -115,38 +132,50 @@ export function FolderList({ folders, isFetching, onOpenFolder, onOpenBookmark }
                         }
 
                         return (
-                          <button
+                          <div
                             key={bookmark.id}
-                            type="button"
-                            className="flex w-full cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-2 py-1.5 text-left font-sans text-inherit transition-colors duration-150 hover:bg-white/5 light:hover:bg-black/5"
-                            onClick={() => onOpenBookmark(bookmark.url)}
-                            title={bookmark.url}
+                            className="group/row flex items-center rounded-md transition-colors duration-150 hover:bg-white/5 light:hover:bg-black/5"
                           >
-                            {faviconUrl ? (
-                              <img
-                                className="h-4 w-4 shrink-0 rounded-[2px]"
-                                src={faviconUrl}
-                                alt=""
-                                width={16}
-                                height={16}
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextElementSibling) {
-                                    (
-                                      e.currentTarget.nextElementSibling as HTMLElement
-                                    ).style.display = 'block';
-                                  }
-                                }}
+                            <button
+                              type="button"
+                              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent px-2 py-1.5 text-left font-sans text-inherit"
+                              onClick={() => onOpenBookmark(bookmark.url)}
+                              title={bookmark.url}
+                            >
+                              {faviconUrl ? (
+                                <img
+                                  className="h-4 w-4 shrink-0 rounded-[2px]"
+                                  src={faviconUrl}
+                                  alt=""
+                                  width={16}
+                                  height={16}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    if (e.currentTarget.nextElementSibling) {
+                                      (
+                                        e.currentTarget.nextElementSibling as HTMLElement
+                                      ).style.display = 'block';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <span
+                                className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)"
+                                style={{ display: faviconUrl ? 'none' : 'block' }}
                               />
-                            ) : null}
-                            <span
-                              className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)"
-                              style={{ display: faviconUrl ? 'none' : 'block' }}
-                            />
-                            <span className="truncate text-[13px]">
-                              {bookmark.title || bookmark.url}
-                            </span>
-                          </button>
+                              <span className="truncate text-[13px]">
+                                {bookmark.title || bookmark.url}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/row:opacity-100"
+                              onClick={() => onDeleteBookmark(bookmark.id, folder.id)}
+                              title="Delete bookmark"
+                            >
+                              ×
+                            </button>
+                          </div>
                         );
                       })
                     )}

@@ -49,7 +49,6 @@ vi.stubGlobal('chrome', {
     }),
     removeTree: vi.fn(),
   },
-  scripting: { executeScript: vi.fn() },
   windows: { update: vi.fn() },
   runtime: { id: 'test-extension-id' },
 });
@@ -220,7 +219,11 @@ describe('handleOpenFolderAsGroup', () => {
     expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://a.com', active: false });
     expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://b.com', active: false });
     expect(chrome.tabs.group).toHaveBeenCalledWith({ tabIds: [50, 51] });
-    expect(chrome.tabGroups.update).toHaveBeenCalledWith(5, { title: 'Dev', color: 'blue' });
+    expect(chrome.tabGroups.update).toHaveBeenCalledWith(5, {
+      title: 'Dev',
+      color: 'blue',
+      collapsed: false,
+    });
     expect(chrome.tabs.onUpdated.addListener).toHaveBeenCalledTimes(2);
     expect(chrome.bookmarks.removeTree).toHaveBeenCalledWith('10');
 

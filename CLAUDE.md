@@ -24,7 +24,6 @@ tsc --noEmit          # Type check
 ```
 entrypoints/popup/          # React popup UI (components, hooks, CSS)
 entrypoints/background.ts   # Service worker (no DOM access)
-entrypoints/content.ts      # Content script (injected into pages)
 lib/                        # Shared utils (ai, storage, grouping, types)
 docs/                       # Plans, PRDs, future features
 public/                     # Static assets (icons, images)

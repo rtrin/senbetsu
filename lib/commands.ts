@@ -7,30 +7,6 @@ import { storage } from './storage';
 import type { CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
-const BODY_TEXT_LIMIT = 500;
-const SCRAPE_TIMEOUT_MS = 2000;
-
-async function extractTabBodyText(tabId: number): Promise<string> {
-  try {
-    const scrapePromise = chrome.scripting.executeScript({
-      target: { tabId },
-      func: (limit: number) => {
-        return (document.body?.innerText ?? '').slice(0, limit);
-      },
-      args: [BODY_TEXT_LIMIT],
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('scrape timeout')), SCRAPE_TIMEOUT_MS),
-    );
-
-    const results = await Promise.race([scrapePromise, timeoutPromise]);
-    return results[0]?.result ?? '';
-  } catch {
-    return '';
-  }
-}
-
 type ClassificationStrategy =
   | { mode: 'proxy' }
   | { mode: 'direct'; apiKey: string }
@@ -68,20 +44,11 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
     const tabs = await chrome.tabs.query({ currentWindow: true });
     const classifiable = tabs.filter((t) => t.id !== undefined && isClassifiableUrl(t.url));
 
-    const tabInputs: TabClassificationInput[] = [];
-    const SCRAPE_BATCH_SIZE = 10;
-    for (let i = 0; i < classifiable.length; i += SCRAPE_BATCH_SIZE) {
-      const batch = classifiable.slice(i, i + SCRAPE_BATCH_SIZE);
-      const infos = await Promise.all(
-        batch.map(async (t) => ({
-          tabId: t.id!,
-          url: t.url!,
-          title: t.title ?? '',
-          bodyText: await extractTabBodyText(t.id!),
-        })),
-      );
-      tabInputs.push(...infos);
-    }
+    const tabInputs: TabClassificationInput[] = classifiable.map((t) => ({
+      tabId: t.id!,
+      url: t.url!,
+      title: t.title ?? '',
+    }));
 
     const results =
       strategy.mode === 'proxy'
@@ -121,20 +88,11 @@ export async function handleClassifyUnsorted(
       return { ok: true };
     }
 
-    const tabInputs: TabClassificationInput[] = [];
-    const SCRAPE_BATCH_SIZE = 10;
-    for (let i = 0; i < tabsToProcess.length; i += SCRAPE_BATCH_SIZE) {
-      const batch = tabsToProcess.slice(i, i + SCRAPE_BATCH_SIZE);
-      const infos = await Promise.all(
-        batch.map(async (t) => ({
-          tabId: t.id!,
-          url: t.url!,
-          title: t.title ?? '',
-          bodyText: await extractTabBodyText(t.id!),
-        })),
-      );
-      tabInputs.push(...infos);
-    }
+    const tabInputs: TabClassificationInput[] = tabsToProcess.map((t) => ({
+      tabId: t.id!,
+      url: t.url!,
+      title: t.title ?? '',
+    }));
 
     const liveGroups = await chrome.tabGroups.query({});
     const existingGroups = Array.from(
@@ -332,11 +290,19 @@ function waitForTabLoad(tabId: number): Promise<void> {
     chrome.tabs
       .get(tabId)
       .then((tab) => {
+        // Fix for "Cached Tab" Deadlock:
+        // Cached sites load so fast that they reach 'complete' before the listener below
+        // can attach, accidentally triggering the 30-second kill-switch. We resolve this
+        // by querying the live tab state instantly beforehand to bypass the wait.
         if (tab.status === 'complete') {
           resolve();
           return;
         }
 
+        // Fix for "Wait For Load" Memory Leak:
+        // A vulnerability existed where if a tab never finished loading (e.g. broken URL
+        // or user immediately closed it), the background listener would wait forever,
+        // silently leaking memory. This strict 30-second kill-switch prevents that.
         const timeout = setTimeout(() => {
           chrome.tabs.onUpdated.removeListener(listener);
           resolve();
@@ -377,7 +343,7 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
       const [folder] = await chrome.bookmarks.get(folderId);
       const title = folder?.title ?? 'Restored';
       const color = 'blue' as chrome.tabGroups.Color;
-      await chrome.tabGroups.update(groupId, { title, color });
+      await chrome.tabGroups.update(groupId, { title, color, collapsed: false });
     }
 
     // Discard each tab after it loads to free memory (fire-and-forget)
@@ -393,6 +359,37 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
   } catch (e) {
     return { ok: false, error: String(e) };
   }
+}
+
+export async function handleDeleteFolder(folderId: string): Promise<CommandResponse> {
+  try {
+    await chrome.bookmarks.removeTree(folderId);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleDeleteBookmark(
+  bookmarkId: string,
+  folderId: string,
+): Promise<CommandResponse> {
+  try {
+    await chrome.bookmarks.remove(bookmarkId);
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+
+  try {
+    const remaining = await chrome.bookmarks.getChildren(folderId);
+    if (remaining.length === 0) {
+      await chrome.bookmarks.removeTree(folderId);
+    }
+  } catch {
+    // Folder may have already been deleted
+  }
+
+  return { ok: true };
 }
 
 export async function handleOpenBookmark(url: string): Promise<CommandResponse> {

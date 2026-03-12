@@ -35,6 +35,11 @@ export function useCurrentTabs(): CurrentTabsResult {
     chrome.tabs.onRemoved.addListener(refresh);
     chrome.tabs.onActivated.addListener(refresh);
     chrome.tabs.onCreated.addListener(refresh);
+    // Fix for "Stale ID" Racing Bug:
+    // When Chrome heavily discards a tab to save RAM, it destroys the underlying tab object
+    // and creates a new one with a different integer ID. If a user tries to save a group
+    // too quickly from the popup, the popup might submit dead IDs. We listen to onReplaced
+    // so the UI instantly syncs to the newly assigned IDs.
     chrome.tabs.onReplaced.addListener(refresh);
 
     return () => {

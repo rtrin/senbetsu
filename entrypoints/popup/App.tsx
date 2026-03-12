@@ -122,6 +122,8 @@ function App() {
     [liveTabs, liveGroups, refreshLiveTabs],
   );
 
+  const [hasMemoryPermission, setHasMemoryPermission] = useState<boolean | null>(null);
+
   const fetchMemoryUsage = useCallback(async () => {
     setIsFetchingMemory(true);
     try {
@@ -134,10 +136,29 @@ function App() {
     }
   }, []);
 
-  const handleSwitchToMemory = useCallback(() => {
-    setActiveView('memory');
-    fetchMemoryUsage();
+  const checkMemoryPermission = useCallback(async () => {
+    const granted = await chrome.permissions.contains({
+      permissions: ['scripting'],
+      origins: ['<all_urls>'],
+    });
+    setHasMemoryPermission(granted);
+    return granted;
+  }, []);
+
+  const requestMemoryPermission = useCallback(async () => {
+    const granted = await chrome.permissions.request({
+      permissions: ['scripting'],
+      origins: ['<all_urls>'],
+    });
+    setHasMemoryPermission(granted);
+    if (granted) fetchMemoryUsage();
   }, [fetchMemoryUsage]);
+
+  const handleSwitchToMemory = useCallback(async () => {
+    setActiveView('memory');
+    const granted = await checkMemoryPermission();
+    if (granted) fetchMemoryUsage();
+  }, [checkMemoryPermission, fetchMemoryUsage]);
 
   const handleSwitchTab = useCallback((tabId: number) => {
     sendCommand({ type: 'CMD_SWITCH_TAB', tabId });
@@ -188,6 +209,24 @@ function App() {
     setActiveView('folders');
     fetchFolders();
   }, [fetchFolders]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      const resp = await sendCommand({ type: 'CMD_DELETE_FOLDER', folderId });
+      if (resp.ok) fetchFolders();
+      else setGroupingError(resp.error ?? 'Failed to delete folder');
+    },
+    [fetchFolders],
+  );
+
+  const handleDeleteBookmark = useCallback(
+    async (bookmarkId: string, folderId: string) => {
+      const resp = await sendCommand({ type: 'CMD_DELETE_BOOKMARK', bookmarkId, folderId });
+      if (resp.ok) fetchFolders();
+      else setGroupingError(resp.error ?? 'Failed to delete bookmark');
+    },
+    [fetchFolders],
+  );
 
   const handleOpenFolder = useCallback(
     async (folderId: string) => {
@@ -257,6 +296,8 @@ function App() {
           isFetching={isFetchingFolders}
           onOpenFolder={handleOpenFolder}
           onOpenBookmark={handleOpenBookmark}
+          onDeleteFolder={handleDeleteFolder}
+          onDeleteBookmark={handleDeleteBookmark}
         />
       )}
 
@@ -264,6 +305,8 @@ function App() {
         <MemoryUsageList
           memoryInfos={memoryInfos.filter((info) => liveTabs.some((t) => t.id === info.tabId))}
           isFetching={isFetchingMemory}
+          hasPermission={hasMemoryPermission}
+          onRequestPermission={requestMemoryPermission}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
         />

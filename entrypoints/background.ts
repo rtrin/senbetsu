@@ -5,6 +5,8 @@ import {
   handleCloseGroup,
   handleCloseTab,
   handleDeactivateLicense,
+  handleDeleteBookmark,
+  handleDeleteFolder,
   handleGetBookmarkFolders,
   handleGetMemoryUsage,
   handleMoveTabToGroup,
@@ -68,6 +70,12 @@ export default defineBackground(() => {
           break;
         case 'CMD_GET_BOOKMARK_FOLDERS':
           responsePromise = handleGetBookmarkFolders();
+          break;
+        case 'CMD_DELETE_FOLDER':
+          responsePromise = handleDeleteFolder(message.folderId);
+          break;
+        case 'CMD_DELETE_BOOKMARK':
+          responsePromise = handleDeleteBookmark(message.bookmarkId, message.folderId);
           break;
         case 'CMD_OPEN_BOOKMARK':
           responsePromise = handleOpenBookmark(message.url);

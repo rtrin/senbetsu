@@ -10,6 +10,8 @@ const badgeClasses: Record<string, string> = {
 interface MemoryUsageListProps {
   memoryInfos: TabMemoryInfo[];
   isFetching: boolean;
+  hasPermission: boolean | null;
+  onRequestPermission: () => void;
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
 }
@@ -17,10 +19,36 @@ interface MemoryUsageListProps {
 export function MemoryUsageList({
   memoryInfos,
   isFetching,
+  hasPermission,
+  onRequestPermission,
   onSwitchTab,
   onCloseTab,
 }: MemoryUsageListProps) {
-  if (isFetching && memoryInfos.length === 0) {
+  if (hasPermission === false) {
+    return (
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+            Memory Usage
+          </h2>
+        </div>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p className="text-(--color-grey) text-[13px]">
+            Memory measurement requires permission to read tab data.
+          </p>
+          <button
+            type="button"
+            className="cursor-pointer rounded-lg border-0 bg-blue-500 px-4 py-2 font-sans font-semibold text-sm text-white transition-[opacity,background-color] duration-150 enabled:hover:bg-blue-600"
+            onClick={onRequestPermission}
+          >
+            Grant Access
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (hasPermission === null || (isFetching && memoryInfos.length === 0)) {
     return (
       <div className="py-6 text-center text-(--color-grey) text-[13px]">
         Calculating memory usage...

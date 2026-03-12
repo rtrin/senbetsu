@@ -21,9 +21,6 @@ vi.stubGlobal('chrome', {
   bookmarks: {
     create: vi.fn(),
   },
-  scripting: {
-    executeScript: vi.fn(),
-  },
   tabGroups: {
     query: vi.fn(),
   },

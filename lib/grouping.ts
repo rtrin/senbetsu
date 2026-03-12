@@ -16,7 +16,7 @@ async function updateGroupMetadata(
   color: TabGroupColor,
 ): Promise<void> {
   const chromeColor = color as chrome.tabGroups.Color;
-  await chrome.tabGroups.update(groupId, { title, color: chromeColor });
+  await chrome.tabGroups.update(groupId, { title, color: chromeColor, collapsed: false });
 }
 
 async function findOrCreateGroup(windowId: number, category: TabCategory): Promise<number | null> {

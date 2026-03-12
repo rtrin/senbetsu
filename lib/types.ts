@@ -109,6 +109,17 @@ export interface CmdGetBookmarkFolders {
   type: 'CMD_GET_BOOKMARK_FOLDERS';
 }
 
+export interface CmdDeleteFolder {
+  type: 'CMD_DELETE_FOLDER';
+  folderId: string;
+}
+
+export interface CmdDeleteBookmark {
+  type: 'CMD_DELETE_BOOKMARK';
+  bookmarkId: string;
+  folderId: string;
+}
+
 export interface CmdOpenBookmark {
   type: 'CMD_OPEN_BOOKMARK';
   url: string;
@@ -129,6 +140,8 @@ export type PopupCommand =
   | CmdSaveGroupToFolder
   | CmdOpenFolderAsGroup
   | CmdGetBookmarkFolders
+  | CmdDeleteFolder
+  | CmdDeleteBookmark
   | CmdOpenBookmark;
 
 export interface CommandResponse {
@@ -160,7 +173,6 @@ export interface TabClassificationInput {
   tabId: number;
   url: string;
   title: string;
-  bodyText: string;
 }
 
 export interface ClassificationResult {

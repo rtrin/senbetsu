@@ -12,7 +12,6 @@ Best practices for AI assistants working on this codebase.
 ```
 entrypoints/popup/        # React popup UI
 entrypoints/background.ts # Service worker (no DOM)
-entrypoints/content.ts    # Content script
 lib/                      # Shared utilities
 docs/                     # Documentation, plans, PRDs
 ```
@@ -35,7 +34,6 @@ docs/                     # Documentation, plans, PRDs
 ### Chrome Extension Specifics
 
 - **Service worker** (`background.ts`): No DOM access, no `window`, no `document`. Use `chrome.runtime` for messaging.
-- **Content scripts** (`content.ts`): Limited Chrome API access, runs in page context.
 - **Popup** (`popup/`): Full Chrome API access, React UI, ephemeral (closes when user clicks away).
 - Use `chrome.storage.local` for persistence, never `localStorage` (not available in service workers).
 
