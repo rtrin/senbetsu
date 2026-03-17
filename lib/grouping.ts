@@ -136,6 +136,9 @@ export async function moveTabToGroup(tabId: number, targetGroupName: string): Pr
 
   if (existingGroupId !== null) {
     groupId = existingGroupId;
+    const groupTabs = await chrome.tabs.query({ groupId });
+    const lastIndex = Math.max(...groupTabs.map((t) => t.index));
+    await chrome.tabs.move(tabId, { index: lastIndex + 1 });
     await chrome.tabs.group({ tabIds: [tabId], groupId });
   } else {
     groupId = await chrome.tabs.group({ tabIds: [tabId] });

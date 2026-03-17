@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
 import { isClassifiableUrl } from '@/lib/utils';
+import { InlineEdit } from './InlineEdit';
 import { TabItem } from './TabItem';
 
 interface TabCategoryListProps {
@@ -14,6 +15,7 @@ interface TabCategoryListProps {
   onMoveTabToGroup: (tabId: number, targetGroupName: string) => void;
   onBookmarkTab: (tabId: number) => void;
   onSaveGroupToFolder: (tabIds: number[], groupName: string) => void;
+  onRenameGroup: (groupId: number, newName: string) => void;
 }
 
 export function TabCategoryList({
@@ -27,6 +29,7 @@ export function TabCategoryList({
   onMoveTabToGroup,
   onBookmarkTab,
   onSaveGroupToFolder,
+  onRenameGroup,
 }: TabCategoryListProps) {
   const [dragOverGroupId, setDragOverGroupId] = useState<number | null>(null);
 
@@ -86,8 +89,16 @@ export function TabCategoryList({
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: colorVar }}
                 />
-                <span className="flex-1 font-semibold text-xs">{groupName}</span>
-                <span className="text-(--color-grey) text-[11px]">{groupTabs.length}</span>
+                <InlineEdit
+                  value={groupName}
+                  onSave={(newName) => onRenameGroup(groupId, newName)}
+                  className="font-semibold text-xs"
+                  suffix={
+                    <span className="rounded-md bg-white/10 light:bg-black/8 px-1.5 py-px text-[11px] opacity-0 transition-opacity duration-150 group-hover/header:opacity-100">
+                      {groupTabs.length}
+                    </span>
+                  }
+                />
                 <button
                   type="button"
                   className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/header:opacity-100"
@@ -116,11 +127,25 @@ export function TabCategoryList({
                 </button>
                 <button
                   type="button"
-                  className="flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) text-base leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
+                  className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
                   onClick={() => onCloseGroup(groupTabs.map((t) => t.id!))}
                   title={`Close all ${groupTabs.length} tabs in "${groupName}"`}
                 >
-                  ×
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    role="img"
+                    aria-label="Close"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
                 </button>
               </div>
               {groupTabs.map((tab) => (
@@ -181,11 +206,25 @@ export function TabCategoryList({
               )}
               <button
                 type="button"
-                className="flex h-5 w-5 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) text-base leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
+                className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
                 onClick={() => onCloseGroup(ungrouped.map((t) => t.id!))}
                 title="Close all ungrouped tabs"
               >
-                ×
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="img"
+                  aria-label="Close"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
             {ungrouped.map((tab) => (

@@ -13,9 +13,11 @@
 * Session saving & restoring (maintain a history of tab groups/folders that overrides local groupings)
 * Mark tabs to not be grouped (in the tab list)
 * Inline renaming of groups and bookmark folders
-* view subfolders
+* Show subfolders inside folders (include button to open individually as tab group)
+* Save to subfolder (shown on group tab — dropdown to left of folder button, default is None, shown on hover)
 * manage unopened tab groups on bookmark bar
 * have drag and drop be scrollable (user hovering tab near the top causes scroll up action, etc)
+* ability to ungroup all groups
 
 ### folders
 * for nested folders... (think about this more)

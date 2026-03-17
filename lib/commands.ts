@@ -392,6 +392,42 @@ export async function handleDeleteBookmark(
   return { ok: true };
 }
 
+export async function handleRenameGroup(
+  groupId: number,
+  newName: string,
+): Promise<CommandResponse> {
+  try {
+    await chrome.tabGroups.update(groupId, { title: newName });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleMoveBookmark(
+  bookmarkId: string,
+  targetFolderId: string,
+): Promise<CommandResponse> {
+  try {
+    await chrome.bookmarks.move(bookmarkId, { parentId: targetFolderId });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleRenameFolder(
+  folderId: string,
+  newName: string,
+): Promise<CommandResponse> {
+  try {
+    await chrome.bookmarks.update(folderId, { title: newName });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
 export async function handleOpenBookmark(url: string): Promise<CommandResponse> {
   try {
     await chrome.tabs.create({ url, active: true });

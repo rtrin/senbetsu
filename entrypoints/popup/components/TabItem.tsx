@@ -62,7 +62,7 @@ export function TabItem({
         {isHttp && (
           <button
             type="button"
-            className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/row:opacity-100"
+            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/row:opacity-100"
             onClick={() => onBookmarkTab(id)}
             title="Bookmark tab"
           >
@@ -84,11 +84,25 @@ export function TabItem({
         )}
         <button
           type="button"
-          className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) leading-none opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/row:opacity-100"
+          className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/row:opacity-100"
           onClick={() => onCloseTab(id)}
           title="Close tab"
         >
-          ×
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="img"
+            aria-label="Close"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
         </button>
       </div>
     </>

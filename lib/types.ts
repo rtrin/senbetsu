@@ -125,6 +125,24 @@ export interface CmdOpenBookmark {
   url: string;
 }
 
+export interface CmdRenameGroup {
+  type: 'CMD_RENAME_GROUP';
+  groupId: number;
+  newName: string;
+}
+
+export interface CmdRenameFolder {
+  type: 'CMD_RENAME_FOLDER';
+  folderId: string;
+  newName: string;
+}
+
+export interface CmdMoveBookmark {
+  type: 'CMD_MOVE_BOOKMARK';
+  bookmarkId: string;
+  targetFolderId: string;
+}
+
 export type PopupCommand =
   | CmdSaveAndGroup
   | CmdSwitchTab
@@ -142,7 +160,10 @@ export type PopupCommand =
   | CmdGetBookmarkFolders
   | CmdDeleteFolder
   | CmdDeleteBookmark
-  | CmdOpenBookmark;
+  | CmdOpenBookmark
+  | CmdRenameGroup
+  | CmdRenameFolder
+  | CmdMoveBookmark;
 
 export interface CommandResponse {
   ok: boolean;

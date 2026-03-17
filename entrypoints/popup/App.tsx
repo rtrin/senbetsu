@@ -228,6 +228,30 @@ function App() {
     [fetchFolders],
   );
 
+  const handleRenameGroup = useCallback(
+    async (groupId: number, newName: string) => {
+      const resp = await sendCommand({ type: 'CMD_RENAME_GROUP', groupId, newName });
+      if (resp.ok) refreshLiveTabs();
+    },
+    [refreshLiveTabs],
+  );
+
+  const handleRenameFolder = useCallback(
+    async (folderId: string, newName: string) => {
+      const resp = await sendCommand({ type: 'CMD_RENAME_FOLDER', folderId, newName });
+      if (resp.ok) fetchFolders();
+    },
+    [fetchFolders],
+  );
+
+  const handleMoveBookmark = useCallback(
+    async (bookmarkId: string, targetFolderId: string) => {
+      const resp = await sendCommand({ type: 'CMD_MOVE_BOOKMARK', bookmarkId, targetFolderId });
+      if (resp.ok) fetchFolders();
+    },
+    [fetchFolders],
+  );
+
   const handleOpenFolder = useCallback(
     async (folderId: string) => {
       const resp = await sendCommand({ type: 'CMD_OPEN_FOLDER_AS_GROUP', folderId });
@@ -258,7 +282,14 @@ function App() {
     <div className="flex flex-col gap-3 p-4">
       <Header tabCount={liveTabs.length} />
 
-      {activeView !== 'settings' && activeView !== 'folders' && (
+      <div className="mb-2 flex rounded-lg bg-white/5 light:bg-black/5 p-1">
+        {viewToggleBtn('groups', 'Groups', () => setActiveView('groups'))}
+        {viewToggleBtn('folders', 'Folders', handleSwitchToFolders)}
+        {viewToggleBtn('memory', 'Memory', handleSwitchToMemory)}
+        {viewToggleBtn('settings', 'Settings', () => setActiveView('settings'))}
+      </div>
+
+      {activeView === 'groups' && (
         <SaveGroupButton isClassifying={isClassifying} onSave={handleSaveAndGroup} />
       )}
 
@@ -267,13 +298,6 @@ function App() {
           {groupingError}
         </div>
       )}
-
-      <div className="mb-2 flex rounded-lg bg-white/5 light:bg-black/5 p-1">
-        {viewToggleBtn('groups', 'Groups', () => setActiveView('groups'))}
-        {viewToggleBtn('folders', 'Folders', handleSwitchToFolders)}
-        {viewToggleBtn('memory', 'Memory', handleSwitchToMemory)}
-        {viewToggleBtn('settings', 'Settings', () => setActiveView('settings'))}
-      </div>
 
       {activeView === 'groups' && (
         <TabCategoryList
@@ -287,6 +311,7 @@ function App() {
           onMoveTabToGroup={handleMoveTabToGroup}
           onBookmarkTab={handleBookmarkTab}
           onSaveGroupToFolder={handleSaveGroupToFolder}
+          onRenameGroup={handleRenameGroup}
         />
       )}
 
@@ -298,6 +323,8 @@ function App() {
           onOpenBookmark={handleOpenBookmark}
           onDeleteFolder={handleDeleteFolder}
           onDeleteBookmark={handleDeleteBookmark}
+          onRenameFolder={handleRenameFolder}
+          onMoveBookmark={handleMoveBookmark}
         />
       )}
 

@@ -9,9 +9,12 @@ import {
   handleDeleteFolder,
   handleGetBookmarkFolders,
   handleGetMemoryUsage,
+  handleMoveBookmark,
   handleMoveTabToGroup,
   handleOpenBookmark,
   handleOpenFolderAsGroup,
+  handleRenameFolder,
+  handleRenameGroup,
   handleSaveAndGroup,
   handleSaveGroupToFolder,
   handleSaveSettings,
@@ -79,6 +82,15 @@ export default defineBackground(() => {
           break;
         case 'CMD_OPEN_BOOKMARK':
           responsePromise = handleOpenBookmark(message.url);
+          break;
+        case 'CMD_RENAME_GROUP':
+          responsePromise = handleRenameGroup(message.groupId, message.newName);
+          break;
+        case 'CMD_RENAME_FOLDER':
+          responsePromise = handleRenameFolder(message.folderId, message.newName);
+          break;
+        case 'CMD_MOVE_BOOKMARK':
+          responsePromise = handleMoveBookmark(message.bookmarkId, message.targetFolderId);
           break;
         default: {
           const _exhaustive: never = message;

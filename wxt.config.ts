@@ -8,6 +8,11 @@ export default defineConfig({
   }),
   manifest: {
     permissions: ['tabs', 'tabGroups', 'storage', 'bookmarks'],
+    host_permissions: [
+      'https://senbetsuapp.com/*',
+      'https://api.lemonsqueezy.com/*',
+      'https://api.openai.com/*',
+    ],
     optional_permissions: ['scripting'],
     optional_host_permissions: ['<all_urls>'],
   },
