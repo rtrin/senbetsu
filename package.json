@@ -2,7 +2,7 @@
   "name": "Senbetsu - AI Tab Manager",
   "description": "Organize your tabs by automatically grouping them with AI.",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "wxt",

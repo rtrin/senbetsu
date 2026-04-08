@@ -200,10 +200,12 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
             type="number"
             min="1"
             max="50"
-            className="w-16 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-center font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 focus:border-blue-500 focus:bg-white/10 light:border-black/15 light:bg-white light:focus:border-blue-500"
+            className="w-16 rounded-lg border border-white/20 light:border-black/15 bg-white/5 light:bg-white px-2 py-1 text-center font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 focus:border-blue-500 light:focus:border-blue-500 focus:bg-white/10"
             value={settings.maxGroups ?? ''}
             onChange={async (e) => {
-              const val = e.target.value === '' ? undefined : Math.max(1, Number(e.target.value));
+              const raw = parseInt(e.target.value, 10);
+              const val =
+                e.target.value === '' ? undefined : Number.isNaN(raw) ? 1 : Math.max(1, raw);
               await storage.updateSettings({ maxGroups: val });
               onSettingsChanged();
             }}

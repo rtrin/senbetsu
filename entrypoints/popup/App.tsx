@@ -243,6 +243,10 @@ function App() {
     [fetchFolders, refreshLiveTabs],
   );
 
+  const groupCount = new Set(liveTabs.filter((t) => t.groupId !== -1).map((t) => t.groupId)).size;
+  const showGroupWarning =
+    activeView === 'groups' && settings.maxGroups !== undefined && groupCount > settings.maxGroups;
+
   const viewToggleBtn = (view: typeof activeView, label: string, onClick: () => void) => (
     <button
       type="button"
@@ -279,21 +283,12 @@ function App() {
         </div>
       )}
 
-      {activeView === 'groups' &&
-        settings.maxGroups !== undefined &&
-        (() => {
-          const currentWindowGroupCount = new Set(
-            liveTabs.filter((t) => t.groupId !== -1).map((t) => t.groupId),
-          ).size;
-          return (
-            currentWindowGroupCount > settings.maxGroups && (
-              <div className="rounded-md bg-yellow-500/10 light:bg-yellow-500/8 px-3 py-2 text-(--color-yellow) text-xs">
-                You have {currentWindowGroupCount} groups open (max: {settings.maxGroups}). Save
-                some groups to folders for a cleaner workspace.
-              </div>
-            )
-          );
-        })()}
+      {showGroupWarning && (
+        <div className="rounded-md bg-yellow-500/10 light:bg-yellow-500/8 px-3 py-2 text-(--color-yellow) text-xs">
+          You have {groupCount} groups open (max: {settings.maxGroups}). Save some groups to folders
+          for a cleaner workspace.
+        </div>
+      )}
 
       {activeView === 'groups' && (
         <TabCategoryList
