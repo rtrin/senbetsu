@@ -55,7 +55,6 @@ vi.stubGlobal('chrome', {
 
 vi.mock('../ai', () => ({
   classifyTabs: vi.fn(),
-  classifyTabsViaProxy: vi.fn(),
 }));
 
 vi.mock('../grouping', () => ({

@@ -1,4 +1,4 @@
-import { OPENAI_MODEL, PROXY_BASE_URL } from './constants';
+import { OPENAI_MODEL } from './constants';
 import type {
   AIGroupingResponse,
   ClassificationResult,
@@ -84,58 +84,6 @@ export async function classifyTabs(
 
   if (!Array.isArray(parsed.groups)) {
     throw new Error('Invalid response: missing groups array');
-  }
-
-  // Validate tab IDs against what we sent
-  const sentIds = new Set(tabs.map((t) => t.tabId));
-  const assignedIds = new Set<number>();
-  const results: ClassificationResult[] = [];
-
-  for (const group of parsed.groups) {
-    const name = typeof group.name === 'string' && group.name.trim() ? group.name.trim() : 'Other';
-    for (const tabId of group.tabIds) {
-      if (!sentIds.has(tabId) || assignedIds.has(tabId)) continue;
-      assignedIds.add(tabId);
-      results.push({ tabId, category: name });
-    }
-  }
-
-  // Assign unmatched tabs to "Other"
-  for (const tab of tabs) {
-    if (!assignedIds.has(tab.tabId)) {
-      results.push({ tabId: tab.tabId, category: 'Other' });
-    }
-  }
-
-  return results;
-}
-
-/**
- * Classify tabs via the Vercel proxy (used for free/pro tiers).
- * The proxy adds the OpenAI API key server-side.
- */
-export async function classifyTabsViaProxy(
-  tabs: TabClassificationInput[],
-  userPrompt?: string,
-  existingGroups?: string[],
-): Promise<ClassificationResult[]> {
-  if (tabs.length === 0) return [];
-
-  const res = await fetch(`${PROXY_BASE_URL}/api/classify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tabs, userPrompt, existingGroups }),
-  });
-
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    throw new Error(`Proxy error: ${res.status} — ${errBody}`);
-  }
-
-  const parsed: AIGroupingResponse = await res.json();
-
-  if (!Array.isArray(parsed.groups)) {
-    throw new Error('Invalid proxy response: missing groups array');
   }
 
   // Validate tab IDs against what we sent

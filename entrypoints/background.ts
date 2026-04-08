@@ -20,8 +20,17 @@ import {
   handleSaveSettings,
   handleSwitchTab,
 } from '@/lib/commands';
+import { STORAGE_KEYS } from '@/lib/constants';
 import { cleanupWindow, removeTab } from '@/lib/grouping';
 import type { ExtensionMessage } from '@/lib/types';
+
+async function removeAnnotation(key: string): Promise<void> {
+  const result = await chrome.storage.local.get(STORAGE_KEYS.annotations);
+  const current = (result[STORAGE_KEYS.annotations] as Record<string, string>) ?? {};
+  if (!(key in current)) return;
+  const { [key]: _, ...rest } = current;
+  await chrome.storage.local.set({ [STORAGE_KEYS.annotations]: rest });
+}
 
 export default defineBackground(() => {
   console.log('[senbetsu] Background service worker started');
@@ -112,6 +121,12 @@ export default defineBackground(() => {
   // Cleanup on tab removal
   chrome.tabs.onRemoved.addListener((tabId) => {
     removeTab(tabId);
+    removeAnnotation(`tab:${tabId}`).catch(() => {});
+  });
+
+  // Cleanup on group removal
+  chrome.tabGroups.onRemoved.addListener((group) => {
+    removeAnnotation(`group:${group.id}`).catch(() => {});
   });
 
   // Cleanup on window removal

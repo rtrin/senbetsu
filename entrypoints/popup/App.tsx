@@ -15,6 +15,7 @@ import { MemoryUsageList } from './components/MemoryUsageList';
 import { SaveGroupButton } from './components/SaveGroupButton';
 import { SettingsPanel } from './components/SettingsPanel';
 import { TabCategoryList } from './components/TabCategoryList';
+import { useAnnotations } from './hooks/useAnnotations';
 import { useCurrentTabs } from './hooks/useCurrentTabs';
 
 function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
@@ -23,7 +24,6 @@ function sendCommand(cmd: PopupCommand): Promise<CommandResponse> {
 
 function App() {
   const [isClassifying, setIsClassifying] = useState(false);
-  const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [activeView, setActiveView] = useState<'groups' | 'folders' | 'memory' | 'settings'>(
     'groups',
   );
@@ -32,14 +32,13 @@ function App() {
   const [folders, setFolders] = useState<BookmarkFolder[]>([]);
   const [isFetchingFolders, setIsFetchingFolders] = useState(false);
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
-  const [usageCount, setUsageCount] = useState(0);
   const [groupingError, setGroupingError] = useState('');
   const { tabs: liveTabs, groups: liveGroups, refresh: refreshLiveTabs } = useCurrentTabs();
+  const { getTabAnnotation, getGroupAnnotation, setTabAnnotation, setGroupAnnotation } =
+    useAnnotations();
 
   const refreshSettings = useCallback(async () => {
-    const [s, count] = await Promise.all([storage.getSettings(), storage.getUsageCount()]);
-    setSettings(s);
-    setUsageCount(count);
+    setSettings(await storage.getSettings());
   }, []);
 
   useEffect(() => {
@@ -71,25 +70,6 @@ function App() {
         }
       } finally {
         setIsClassifying(false);
-      }
-    },
-    [refreshLiveTabs, refreshSettings],
-  );
-
-  const handleCleanUp = useCallback(
-    async (tabIds: number[]) => {
-      setIsCleaningUp(true);
-      setGroupingError('');
-      try {
-        const resp = await sendCommand({ type: 'CMD_CLASSIFY_UNSORTED', tabIds });
-        if (!resp.ok) {
-          setGroupingError(resp.error ?? 'Clean up failed');
-        } else {
-          refreshLiveTabs();
-          refreshSettings();
-        }
-      } finally {
-        setIsCleaningUp(false);
       }
     },
     [refreshLiveTabs, refreshSettings],
@@ -299,19 +279,37 @@ function App() {
         </div>
       )}
 
+      {activeView === 'groups' &&
+        settings.maxGroups !== undefined &&
+        (() => {
+          const currentWindowGroupCount = new Set(
+            liveTabs.filter((t) => t.groupId !== -1).map((t) => t.groupId),
+          ).size;
+          return (
+            currentWindowGroupCount > settings.maxGroups && (
+              <div className="rounded-md bg-yellow-500/10 light:bg-yellow-500/8 px-3 py-2 text-(--color-yellow) text-xs">
+                You have {currentWindowGroupCount} groups open (max: {settings.maxGroups}). Save
+                some groups to folders for a cleaner workspace.
+              </div>
+            )
+          );
+        })()}
+
       {activeView === 'groups' && (
         <TabCategoryList
           tabs={liveTabs}
           groups={liveGroups}
-          isCleaningUp={isCleaningUp}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
           onCloseGroup={handleCloseGroup}
-          onCleanUp={handleCleanUp}
           onMoveTabToGroup={handleMoveTabToGroup}
           onBookmarkTab={handleBookmarkTab}
           onSaveGroupToFolder={handleSaveGroupToFolder}
           onRenameGroup={handleRenameGroup}
+          getTabAnnotation={getTabAnnotation}
+          getGroupAnnotation={getGroupAnnotation}
+          onAnnotateTab={setTabAnnotation}
+          onAnnotateGroup={setGroupAnnotation}
         />
       )}
 
@@ -342,7 +340,6 @@ function App() {
       {activeView === 'settings' && (
         <SettingsPanel
           settings={settings}
-          usageCount={usageCount}
           sendCommand={sendCommand}
           onSettingsChanged={refreshSettings}
         />

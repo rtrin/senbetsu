@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const MOCK_PRO_ID = 'prod_pro_123';
 const MOCK_BYOK_ID = 'prod_byok_456';
 
 vi.mock('../constants', () => ({
-  LS_PRO_PRODUCT_ID: MOCK_PRO_ID,
   LS_BYOK_PRODUCT_ID: MOCK_BYOK_ID,
 }));
 
@@ -18,21 +16,7 @@ beforeEach(() => {
 });
 
 describe('activateLicense', () => {
-  it('returns valid pro tier when product matches', async () => {
-    fetchMock.mockResolvedValue({
-      json: async () => ({
-        activated: true,
-        valid: true,
-        meta: { product_id: MOCK_PRO_ID },
-      }),
-    });
-
-    const result = await activateLicense('test-key');
-    expect(result.valid).toBe(true);
-    expect(result.tier).toBe('pro');
-  });
-
-  it('returns valid byok tier when product matches', async () => {
+  it('returns valid when product matches BYOK', async () => {
     fetchMock.mockResolvedValue({
       json: async () => ({
         activated: true,
@@ -43,7 +27,6 @@ describe('activateLicense', () => {
 
     const result = await activateLicense('test-key');
     expect(result.valid).toBe(true);
-    expect(result.tier).toBe('byok');
   });
 
   it('returns invalid when license key is wrong', async () => {
@@ -84,13 +67,12 @@ describe('validateLicense', () => {
     fetchMock.mockResolvedValue({
       json: async () => ({
         valid: true,
-        meta: { product_id: MOCK_PRO_ID },
+        meta: { product_id: MOCK_BYOK_ID },
       }),
     });
 
     const result = await validateLicense('test-key');
     expect(result.valid).toBe(true);
-    expect(result.tier).toBe('pro');
   });
 
   it('returns invalid when license expired', async () => {

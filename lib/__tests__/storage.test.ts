@@ -30,84 +30,21 @@ describe('storage.getSettings', () => {
   });
 
   it('returns stored settings', async () => {
-    const custom = { ...DEFAULT_SETTINGS, tier: 'pro' as const, licenseKey: 'abc' };
+    const custom = { ...DEFAULT_SETTINGS, licenseKey: 'abc', openaiApiKey: 'sk-123' };
     mockStore.senbetsu_settings = custom;
 
     const settings = await storage.getSettings();
-    expect(settings.tier).toBe('pro');
     expect(settings.licenseKey).toBe('abc');
+    expect(settings.openaiApiKey).toBe('sk-123');
   });
 });
 
 describe('storage.updateSettings', () => {
   it('merges patch into existing settings', async () => {
-    await storage.updateSettings({ tier: 'byok' });
+    await storage.updateSettings({ openaiApiKey: 'sk-test' });
     const settings = await storage.getSettings();
-    expect(settings.tier).toBe('byok');
-    expect(settings.dailyUsageCount).toBe(0);
-  });
-});
-
-describe('storage.getUsageCount', () => {
-  it('returns 0 when no usage recorded', async () => {
-    const count = await storage.getUsageCount();
-    expect(count).toBe(0);
-  });
-
-  it('returns stored count for today', async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    mockStore.senbetsu_settings = {
-      ...DEFAULT_SETTINGS,
-      dailyUsageCount: 5,
-      dailyUsageDate: today,
-    };
-
-    const count = await storage.getUsageCount();
-    expect(count).toBe(5);
-  });
-
-  it('resets count when date is stale', async () => {
-    mockStore.senbetsu_settings = {
-      ...DEFAULT_SETTINGS,
-      dailyUsageCount: 8,
-      dailyUsageDate: '2020-01-01',
-    };
-
-    const count = await storage.getUsageCount();
-    expect(count).toBe(0);
-  });
-});
-
-describe('storage.incrementUsage', () => {
-  it('increments from 0', async () => {
-    await storage.incrementUsage();
-    const count = await storage.getUsageCount();
-    expect(count).toBe(1);
-  });
-
-  it('increments existing count for today', async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    mockStore.senbetsu_settings = {
-      ...DEFAULT_SETTINGS,
-      dailyUsageCount: 3,
-      dailyUsageDate: today,
-    };
-
-    await storage.incrementUsage();
-    const count = await storage.getUsageCount();
-    expect(count).toBe(4);
-  });
-
-  it('resets and increments when date is stale', async () => {
-    mockStore.senbetsu_settings = {
-      ...DEFAULT_SETTINGS,
-      dailyUsageCount: 9,
-      dailyUsageDate: '2020-01-01',
-    };
-
-    await storage.incrementUsage();
-    const count = await storage.getUsageCount();
-    expect(count).toBe(1);
+    expect(settings.openaiApiKey).toBe('sk-test');
+    expect(settings.bookmarkAutoClose).toBe(true);
   });
 });
 
@@ -127,27 +64,24 @@ describe('storage.saveApiKey', () => {
   });
 });
 
-describe('storage.activateTier', () => {
-  it('saves tier and license key', async () => {
-    await storage.activateTier('pro', 'license-abc');
+describe('storage.activate', () => {
+  it('saves license key', async () => {
+    await storage.activate('license-abc');
     const settings = await storage.getSettings();
-    expect(settings.tier).toBe('pro');
     expect(settings.licenseKey).toBe('license-abc');
   });
 });
 
 describe('storage.deactivate', () => {
-  it('resets to free tier and clears keys', async () => {
+  it('clears license key and API key', async () => {
     mockStore.senbetsu_settings = {
       ...DEFAULT_SETTINGS,
-      tier: 'byok',
       licenseKey: 'abc',
       openaiApiKey: 'sk-123',
     };
 
     await storage.deactivate();
     const settings = await storage.getSettings();
-    expect(settings.tier).toBe('free');
     expect(settings.licenseKey).toBeUndefined();
     expect(settings.openaiApiKey).toBeUndefined();
   });

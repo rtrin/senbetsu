@@ -1,5 +1,4 @@
-import { classifyTabs, classifyTabsViaProxy } from './ai';
-import { FREE_DAILY_LIMIT } from './constants';
+import { classifyTabs } from './ai';
 import { applyClassifications, moveTabToGroup } from './grouping';
 import { activateLicense, deactivateLicense } from './license';
 import { measureTabMemory } from './memory';
@@ -7,42 +6,37 @@ import { storage } from './storage';
 import type { CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
-type ClassificationStrategy =
-  | { mode: 'proxy' }
-  | { mode: 'direct'; apiKey: string }
-  | { error: string };
-
-async function resolveClassificationStrategy(): Promise<ClassificationStrategy> {
+async function getApiKey(): Promise<string | null> {
   const settings = await storage.getSettings();
-
-  if (settings.tier === 'byok') {
-    if (!settings.openaiApiKey) {
-      return { error: 'BYOK tier but no API key set. Add your key in Settings.' };
-    }
-    return { mode: 'direct', apiKey: settings.openaiApiKey };
-  }
-
-  if (settings.tier === 'pro') {
-    return { mode: 'proxy' };
-  }
-
-  // Free tier — enforce daily limit
-  const count = await storage.getUsageCount();
-  if (count >= FREE_DAILY_LIMIT) {
-    return {
-      error: `Daily limit of ${FREE_DAILY_LIMIT} free usages reached. Upgrade to Pro or add your own API key.`,
-    };
-  }
-  return { mode: 'proxy' };
+  return settings.openaiApiKey ?? null;
 }
 
 export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandResponse> {
   try {
-    const strategy = await resolveClassificationStrategy();
-    if ('error' in strategy) return { ok: false, error: strategy.error };
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      return { ok: false, error: 'Add your OpenAI API key in Settings to use AI grouping.' };
+    }
+
+    const settings = await storage.getSettings();
+    const preserveGroups = settings.preserveExistingGroups !== false;
 
     const tabs = await chrome.tabs.query({ currentWindow: true });
-    const classifiable = tabs.filter((t) => t.id !== undefined && isClassifiableUrl(t.url));
+
+    let existingGroups: string[] | undefined;
+    let namedGroupIds: Set<number> | undefined;
+    if (preserveGroups) {
+      const liveGroups = await chrome.tabGroups.query({});
+      const named = liveGroups.filter((g) => g.title);
+      existingGroups = Array.from(new Set(named.map((g) => g.title!)));
+      namedGroupIds = new Set(named.map((g) => g.id));
+    }
+
+    const classifiable = preserveGroups
+      ? tabs.filter(
+          (t) => t.id !== undefined && isClassifiableUrl(t.url) && !namedGroupIds!.has(t.groupId),
+        )
+      : tabs.filter((t) => t.id !== undefined && isClassifiableUrl(t.url));
 
     const tabInputs: TabClassificationInput[] = classifiable.map((t) => ({
       tabId: t.id!,
@@ -50,22 +44,13 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
       title: t.title ?? '',
     }));
 
-    const results =
-      strategy.mode === 'proxy'
-        ? await classifyTabsViaProxy(tabInputs, userPrompt)
-        : await classifyTabs(tabInputs, strategy.apiKey, userPrompt);
+    const results = await classifyTabs(tabInputs, apiKey, userPrompt, existingGroups);
 
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
     }
 
     await applyClassifications(results);
-
-    const settings = await storage.getSettings();
-    if (settings.tier === 'free') {
-      await storage.incrementUsage();
-    }
-
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
@@ -76,8 +61,10 @@ export async function handleClassifyUnsorted(
   unclassifiedTabIds: number[],
 ): Promise<CommandResponse> {
   try {
-    const strategy = await resolveClassificationStrategy();
-    if ('error' in strategy) return { ok: false, error: strategy.error };
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      return { ok: false, error: 'Add your OpenAI API key in Settings to use AI grouping.' };
+    }
 
     const allTabs = await chrome.tabs.query({ currentWindow: true });
     const tabsToProcess = allTabs.filter(
@@ -99,22 +86,13 @@ export async function handleClassifyUnsorted(
       new Set(liveGroups.filter((g) => g.title).map((g) => g.title!)),
     );
 
-    const results =
-      strategy.mode === 'proxy'
-        ? await classifyTabsViaProxy(tabInputs, undefined, existingGroups)
-        : await classifyTabs(tabInputs, strategy.apiKey, undefined, existingGroups);
+    const results = await classifyTabs(tabInputs, apiKey, undefined, existingGroups);
 
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
     }
 
     await applyClassifications(results);
-
-    const settings = await storage.getSettings();
-    if (settings.tier === 'free') {
-      await storage.incrementUsage();
-    }
-
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
@@ -177,11 +155,11 @@ export async function handleMoveTabToGroup(
 export async function handleActivateLicense(licenseKey: string): Promise<CommandResponse> {
   try {
     const result = await activateLicense(licenseKey);
-    if (!result.valid || !result.tier) {
+    if (!result.valid) {
       return { ok: false, error: result.error ?? 'License activation failed' };
     }
-    await storage.activateTier(result.tier, licenseKey);
-    return { ok: true, data: { tier: result.tier } };
+    await storage.activate(licenseKey);
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
   }

@@ -15,15 +15,12 @@ export type TabGroupColor =
 
 // ─── Settings ───────────────────────────────────────────────────
 
-export type UserTier = 'free' | 'pro' | 'byok';
-
 export interface AppSettings {
   licenseKey?: string;
-  tier: UserTier;
   openaiApiKey?: string;
-  dailyUsageCount: number;
-  dailyUsageDate: string;
   bookmarkAutoClose?: boolean;
+  preserveExistingGroups?: boolean;
+  maxGroups?: number;
 }
 
 // ─── Popup Commands ─────────────────────────────────────────────

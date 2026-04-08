@@ -1,4 +1,4 @@
-import { LS_BYOK_PRODUCT_ID, LS_PRO_PRODUCT_ID } from './constants';
+import { LS_BYOK_PRODUCT_ID } from './constants';
 
 const LS_ACTIVATE_URL = 'https://api.lemonsqueezy.com/v1/licenses/activate';
 const LS_VALIDATE_URL = 'https://api.lemonsqueezy.com/v1/licenses/validate';
@@ -6,14 +6,7 @@ const LS_DEACTIVATE_URL = 'https://api.lemonsqueezy.com/v1/licenses/deactivate';
 
 interface LicenseValidation {
   valid: boolean;
-  tier: 'pro' | 'byok' | null;
   error?: string;
-}
-
-function tierFromProductId(productId: string): 'pro' | 'byok' | null {
-  if (productId === LS_PRO_PRODUCT_ID) return 'pro';
-  if (productId === LS_BYOK_PRODUCT_ID) return 'byok';
-  return null;
 }
 
 export async function activateLicense(licenseKey: string): Promise<LicenseValidation> {
@@ -27,18 +20,17 @@ export async function activateLicense(licenseKey: string): Promise<LicenseValida
     const data = await res.json();
 
     if (!data.activated && !data.valid) {
-      return { valid: false, tier: null, error: data.error ?? 'Invalid license key' };
+      return { valid: false, error: data.error ?? 'Invalid license key' };
     }
 
     const productId = String(data.meta?.product_id ?? '');
-    const tier = tierFromProductId(productId);
-    if (!tier) {
-      return { valid: false, tier: null, error: 'License is not for a Senbetsu product' };
+    if (productId !== LS_BYOK_PRODUCT_ID) {
+      return { valid: false, error: 'License is not for a Senbetsu product' };
     }
 
-    return { valid: true, tier };
+    return { valid: true };
   } catch {
-    return { valid: false, tier: null, error: 'Failed to connect to license server' };
+    return { valid: false, error: 'Failed to connect to license server' };
   }
 }
 
@@ -53,14 +45,13 @@ export async function validateLicense(licenseKey: string): Promise<LicenseValida
     const data = await res.json();
 
     if (!data.valid) {
-      return { valid: false, tier: null, error: data.error ?? 'License is no longer valid' };
+      return { valid: false, error: data.error ?? 'License is no longer valid' };
     }
 
     const productId = String(data.meta?.product_id ?? '');
-    const tier = tierFromProductId(productId);
-    return { valid: !!tier, tier };
+    return { valid: productId === LS_BYOK_PRODUCT_ID };
   } catch {
-    return { valid: false, tier: null, error: 'Failed to connect to license server' };
+    return { valid: false, error: 'Failed to connect to license server' };
   }
 }
 

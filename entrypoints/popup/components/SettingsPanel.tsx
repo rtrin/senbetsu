@@ -1,28 +1,15 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
-import { FREE_DAILY_LIMIT } from '@/lib/constants';
 import { storage } from '@/lib/storage';
 import type { AppSettings, CommandResponse, PopupCommand } from '@/lib/types';
 
-const tierBadgeClasses: Record<string, string> = {
-  free: 'text-(--color-grey) bg-white/10 light:bg-black/5',
-  pro: 'text-blue-500 bg-blue-500/15',
-  byok: 'text-violet-400 bg-violet-500/15',
-};
-
 interface SettingsPanelProps {
   settings: AppSettings;
-  usageCount: number;
   sendCommand: (cmd: PopupCommand) => Promise<CommandResponse>;
   onSettingsChanged: () => void;
 }
 
-export function SettingsPanel({
-  settings,
-  usageCount,
-  sendCommand,
-  onSettingsChanged,
-}: SettingsPanelProps) {
+export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: SettingsPanelProps) {
   const [licenseKey, setLicenseKey] = useState('');
   const [apiKey, setApiKey] = useState(settings.openaiApiKey ?? '');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -31,8 +18,7 @@ export function SettingsPanel({
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [error, setError] = useState('');
   const bookmarkAutoClose = settings.bookmarkAutoClose !== false;
-
-  const tierLabel = settings.tier === 'free' ? 'Free' : settings.tier === 'pro' ? 'Pro' : 'BYOK';
+  const preserveExistingGroups = settings.preserveExistingGroups !== false;
 
   const handleActivate = async () => {
     if (!licenseKey.trim()) return;
@@ -86,6 +72,11 @@ export function SettingsPanel({
     onSettingsChanged();
   };
 
+  const handleTogglePreserveGroups = async () => {
+    await storage.updateSettings({ preserveExistingGroups: !preserveExistingGroups });
+    onSettingsChanged();
+  };
+
   const handleRemoveApiKey = async () => {
     setIsSavingKey(true);
     try {
@@ -108,56 +99,6 @@ export function SettingsPanel({
 
   return (
     <section className="flex flex-col gap-4">
-      {/* Tier & Usage */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-[13px]">Current Plan</span>
-          <span
-            className={clsx(
-              'rounded px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider',
-              tierBadgeClasses[settings.tier],
-            )}
-          >
-            {tierLabel}
-          </span>
-        </div>
-        {settings.tier === 'free' ? (
-          <div className="text-(--color-grey) text-xs">
-            {usageCount} / {FREE_DAILY_LIMIT} free usages today
-          </div>
-        ) : (
-          <div className="text-(--color-grey) text-xs">Unlimited usages</div>
-        )}
-      </div>
-
-      {/* Upgrade Links (free tier only) */}
-      {settings.tier === 'free' && (
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            className="w-full cursor-pointer rounded-lg border-0 bg-blue-500 px-3 py-1.5 text-center font-sans font-semibold text-white text-xs transition-[opacity,background-color] duration-150 enabled:hover:bg-blue-600"
-            onClick={() =>
-              chrome.tabs.create({
-                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/6d84a106-1af7-462c-894c-17aff81d0b47',
-              })
-            }
-          >
-            Upgrade to Pro — $5/mo
-          </button>
-          <button
-            type="button"
-            className={clsx(btnGhost, 'w-full text-center')}
-            onClick={() =>
-              chrome.tabs.create({
-                url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/26f29df0-6431-4c43-9eee-ca107f88323a',
-              })
-            }
-          >
-            Get BYOK — $7 one-time
-          </button>
-        </div>
-      )}
-
       {/* License Key */}
       <div className="flex flex-col gap-2">
         <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
@@ -165,7 +106,7 @@ export function SettingsPanel({
         </h3>
         {settings.licenseKey ? (
           <div className="flex items-center justify-between rounded-md bg-white/4 light:bg-black/3 p-2">
-            <span className="font-medium text-[13px]">{tierLabel} license active</span>
+            <span className="font-medium text-[13px]">BYOK license active</span>
             <button
               type="button"
               className={clsx(btnGhost, 'enabled:hover:text-(--color-red)')}
@@ -196,8 +137,8 @@ export function SettingsPanel({
         )}
       </div>
 
-      {/* BYOK API Key (only for byok tier) */}
-      {settings.tier === 'byok' && (
+      {/* OpenAI API Key (only when licensed) */}
+      {settings.licenseKey && (
         <div className="flex flex-col gap-2">
           <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
             OpenAI API Key
@@ -248,6 +189,46 @@ export function SettingsPanel({
         </div>
       )}
 
+      {/* Groups */}
+      <div className="flex flex-col gap-2">
+        <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+          Groups
+        </h3>
+        <div className="flex items-center justify-between border-white/8 light:border-black/8 border-t py-2">
+          <span className="font-medium text-[13px]">Max groups warning</span>
+          <input
+            type="number"
+            min="1"
+            max="50"
+            className="w-16 rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-center font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 focus:border-blue-500 focus:bg-white/10 light:border-black/15 light:bg-white light:focus:border-blue-500"
+            value={settings.maxGroups ?? ''}
+            onChange={async (e) => {
+              const val = e.target.value === '' ? undefined : Math.max(1, Number(e.target.value));
+              await storage.updateSettings({ maxGroups: val });
+              onSettingsChanged();
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between border-white/8 light:border-black/8 border-y py-2">
+          <span className="font-medium text-[13px]">Preserve existing tab groups</span>
+          <button
+            type="button"
+            className={clsx(
+              'relative h-[22px] w-[40px] cursor-pointer rounded-[11px] border-0 p-0 transition-colors duration-200',
+              preserveExistingGroups ? 'bg-blue-500' : 'bg-white/15 light:bg-black/15',
+            )}
+            onClick={handleTogglePreserveGroups}
+          >
+            <span
+              className={clsx(
+                'absolute top-[2px] left-[2px] h-[18px] w-[18px] rounded-full bg-white transition-transform duration-200',
+                preserveExistingGroups && 'translate-x-[18px]',
+              )}
+            />
+          </button>
+        </div>
+      </div>
+
       {/* Bookmarks */}
       <div className="flex flex-col gap-2">
         <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
@@ -291,7 +272,7 @@ export function SettingsPanel({
             </button>
           </p>
         </div>
-        {settings.tier === 'byok' && (
+        {settings.licenseKey && (
           <div className="flex items-start gap-2">
             <span className="shrink-0 text-[14px] leading-[1.5]">🔑</span>
             <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
