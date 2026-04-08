@@ -7,13 +7,16 @@ import type {
   TabClassificationInput,
 } from './types';
 
-function getSystemPrompt(userPrompt?: string, existingGroups?: string[]): string {
+function getSystemPrompt(
+  userPrompt?: string,
+  existingGroups?: string[],
+  maxGroups?: number,
+): string {
   let base = `You are an intelligent tab organizer. You will receive a list of browser tabs with their URLs and titles.
 
 Your job is to group them into logical clusters and give each group a short, descriptive name (e.g. "React Libraries", "Job Applications", "Cooking Recipes").
 
 Rules:
-- Aim for 3-7 groups total
 - Group names should be concise (1-4 words) and specific to the content
 - Every tab must be assigned to exactly one group
 - Use tab IDs exactly as provided
@@ -22,11 +25,17 @@ Respond strictly in JSON format:
 { "groups": [{ "name": "<Group Name>", "tabIds": [<id>, ...] }] }`;
 
   if (existingGroups && existingGroups.length > 0) {
-    base += `\n\nThese groups already exist: ${existingGroups.join(', ')}.\nPrefer assigning tabs to these existing groups when the content is a good fit.\nYou may create new groups if tabs don't fit any existing category.`;
+    base += `\n\nExisting groups: ${existingGroups.join(', ')}.
+You MUST assign every tab to an existing group unless no existing group is even remotely related. Only create a new group when there is genuinely no fit. When in doubt, use an existing group even if it is a loose match.`;
+  }
+
+  if (maxGroups !== undefined) {
+    const current = existingGroups?.length ?? 0;
+    base += `\n\nThe user's preferred maximum is ${maxGroups} groups total (currently ${current}). Do not exceed this total. Consolidate tabs into fewer groups where possible.`;
   }
 
   if (userPrompt?.trim()) {
-    return `${base}\n\nUSER INSTRUCTION: Group the tabs based on: "${userPrompt.trim()}"`;
+    return `${base}\n\nUSER INSTRUCTION (treat this as a strict constraint): "${userPrompt.trim()}"`;
   }
 
   return base;
@@ -41,13 +50,14 @@ export async function classifyTabs(
   apiKey: string,
   userPrompt?: string,
   existingGroups?: string[],
+  maxGroups?: number,
 ): Promise<ClassificationResult[]> {
   if (tabs.length === 0) return [];
 
   const body: OpenAIChatRequest = {
     model: OPENAI_MODEL,
     messages: [
-      { role: 'system', content: getSystemPrompt(userPrompt, existingGroups) },
+      { role: 'system', content: getSystemPrompt(userPrompt, existingGroups, maxGroups) },
       { role: 'user', content: buildTabList(tabs) },
     ],
     temperature: 0.1,

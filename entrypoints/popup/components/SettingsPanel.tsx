@@ -117,23 +117,50 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
             </button>
           </div>
         ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="Enter license key"
-              value={licenseKey}
-              onChange={(e) => setLicenseKey(e.target.value)}
-            />
-            <button
-              type="button"
-              className={btnPrimarySm}
-              onClick={handleActivate}
-              disabled={isActivating || !licenseKey.trim()}
-            >
-              {isActivating ? 'Activating...' : 'Activate'}
-            </button>
-          </div>
+          <>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="Enter license key"
+                value={licenseKey}
+                onChange={(e) => setLicenseKey(e.target.value)}
+              />
+              <button
+                type="button"
+                className={btnPrimarySm}
+                onClick={handleActivate}
+                disabled={isActivating || !licenseKey.trim()}
+              >
+                {isActivating ? 'Activating...' : 'Activate'}
+              </button>
+            </div>
+            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
+                onClick={() =>
+                  chrome.tabs.create({
+                    url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/26f29df0-6431-4c43-9eee-ca107f88323a',
+                  })
+                }
+              >
+                Get a BYOK license at senbetsu.lemonsqueezy.com →
+              </button>
+            </p>
+            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
+              Already purchased?{' '}
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
+                onClick={() =>
+                  chrome.tabs.create({ url: 'https://app.lemonsqueezy.com/my-orders/login' })
+                }
+              >
+                View your license keys →
+              </button>
+            </p>
+          </>
         )}
       </div>
 
@@ -196,20 +223,21 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
         </h3>
         <div className="flex items-center justify-between border-white/8 light:border-black/8 border-t py-2">
           <span className="font-medium text-[13px]">Max groups warning</span>
-          <input
-            type="number"
-            min="1"
-            max="50"
-            className="w-16 rounded-lg border border-white/20 light:border-black/15 bg-white/5 light:bg-white px-2 py-1 text-center font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 focus:border-blue-500 light:focus:border-blue-500 focus:bg-white/10"
-            value={settings.maxGroups ?? ''}
+          <select
+            className="rounded-lg border border-white/20 light:border-black/15 bg-white/5 light:bg-white px-2 py-1 font-sans text-[13px] text-inherit outline-none transition-[border-color,background-color] duration-150 focus:border-blue-500 light:focus:border-blue-500 focus:bg-white/10"
+            value={settings.maxGroups ?? 'off'}
             onChange={async (e) => {
-              const raw = parseInt(e.target.value, 10);
-              const val =
-                e.target.value === '' ? undefined : Number.isNaN(raw) ? 1 : Math.max(1, raw);
+              const val = e.target.value === 'off' ? undefined : Number(e.target.value);
               await storage.updateSettings({ maxGroups: val });
               onSettingsChanged();
             }}
-          />
+          >
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="10">10</option>
+            <option value="off">Off</option>
+          </select>
         </div>
         <div className="flex items-center justify-between border-white/8 light:border-black/8 border-y py-2">
           <span className="font-medium text-[13px]">Preserve existing tab groups</span>
@@ -236,7 +264,7 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
         <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
           Bookmarks
         </h3>
-        <div className="flex items-center justify-between border-white/8 light:border-black/8 border-y py-2">
+        <div className="flex items-center justify-between border-white/8 light:border-black/8 border-t py-2">
           <span className="font-medium text-[13px]">Auto-close tabs after saving</span>
           <button
             type="button"
@@ -264,7 +292,7 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
         <div className="flex items-start gap-2">
           <span className="shrink-0 text-[14px] leading-[1.5]">⌨️</span>
           <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
-            Set a keyboard shortcut to open Senbetsu instantly.{' '}
+            Set a keyboard shortcut to open Senbetsu quickly.{' '}
             <button
               type="button"
               className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"

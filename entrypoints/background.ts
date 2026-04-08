@@ -19,6 +19,7 @@ import {
   handleSaveGroupToFolder,
   handleSaveSettings,
   handleSwitchTab,
+  handleUngroupTabs,
 } from '@/lib/commands';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { cleanupWindow, removeTab } from '@/lib/grouping';
@@ -100,6 +101,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_MOVE_BOOKMARK':
           responsePromise = handleMoveBookmark(message.bookmarkId, message.targetFolderId);
+          break;
+        case 'CMD_UNGROUP_TABS':
+          responsePromise = handleUngroupTabs(message.tabIds);
           break;
         default: {
           const _exhaustive: never = message;

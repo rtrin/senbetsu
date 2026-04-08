@@ -59,7 +59,7 @@ export function InlineEdit({ value, onSave, className = '', suffix }: InlineEdit
       {suffix}
       <button
         type="button"
-        className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-inherit opacity-0 transition-opacity duration-150 group-hover/header:opacity-100"
+        className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-blue) group-hover/header:opacity-100"
         onClick={() => {
           setDraft(value);
           setIsEditing(true);

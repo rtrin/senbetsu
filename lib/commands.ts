@@ -44,7 +44,13 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
       title: t.title ?? '',
     }));
 
-    const results = await classifyTabs(tabInputs, apiKey, userPrompt, existingGroups);
+    const results = await classifyTabs(
+      tabInputs,
+      apiKey,
+      userPrompt,
+      existingGroups,
+      settings.maxGroups,
+    );
 
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
@@ -81,12 +87,21 @@ export async function handleClassifyUnsorted(
       title: t.title ?? '',
     }));
 
-    const liveGroups = await chrome.tabGroups.query({});
+    const [liveGroups, settings] = await Promise.all([
+      chrome.tabGroups.query({}),
+      storage.getSettings(),
+    ]);
     const existingGroups = Array.from(
       new Set(liveGroups.filter((g) => g.title).map((g) => g.title!)),
     );
 
-    const results = await classifyTabs(tabInputs, apiKey, undefined, existingGroups);
+    const results = await classifyTabs(
+      tabInputs,
+      apiKey,
+      undefined,
+      existingGroups,
+      settings.maxGroups,
+    );
 
     if (results.length === 0) {
       return { ok: false, error: 'Classification failed: no tabs could be categorized' };
@@ -376,6 +391,15 @@ export async function handleRenameGroup(
 ): Promise<CommandResponse> {
   try {
     await chrome.tabGroups.update(groupId, { title: newName });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleUngroupTabs(tabIds: number[]): Promise<CommandResponse> {
+  try {
+    await chrome.tabs.ungroup(tabIds as [number, ...number[]]);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };

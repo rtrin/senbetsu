@@ -128,6 +128,11 @@ export interface CmdRenameGroup {
   newName: string;
 }
 
+export interface CmdUngroupTabs {
+  type: 'CMD_UNGROUP_TABS';
+  tabIds: number[];
+}
+
 export interface CmdRenameFolder {
   type: 'CMD_RENAME_FOLDER';
   folderId: string;
@@ -160,7 +165,8 @@ export type PopupCommand =
   | CmdOpenBookmark
   | CmdRenameGroup
   | CmdRenameFolder
-  | CmdMoveBookmark;
+  | CmdMoveBookmark
+  | CmdUngroupTabs;
 
 export interface CommandResponse {
   ok: boolean;

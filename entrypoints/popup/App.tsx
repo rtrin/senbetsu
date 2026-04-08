@@ -208,6 +208,14 @@ function App() {
     [fetchFolders],
   );
 
+  const handleUngroupTabs = useCallback(
+    async (tabIds: number[]) => {
+      const resp = await sendCommand({ type: 'CMD_UNGROUP_TABS', tabIds });
+      if (resp.ok) refreshLiveTabs();
+    },
+    [refreshLiveTabs],
+  );
+
   const handleRenameGroup = useCallback(
     async (groupId: number, newName: string) => {
       const resp = await sendCommand({ type: 'CMD_RENAME_GROUP', groupId, newName });
@@ -301,6 +309,7 @@ function App() {
           onBookmarkTab={handleBookmarkTab}
           onSaveGroupToFolder={handleSaveGroupToFolder}
           onRenameGroup={handleRenameGroup}
+          onUngroupTabs={handleUngroupTabs}
           getTabAnnotation={getTabAnnotation}
           getGroupAnnotation={getGroupAnnotation}
           onAnnotateTab={setTabAnnotation}
