@@ -1,7 +1,17 @@
 import { clsx } from 'clsx';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { BookmarkFolder } from '@/lib/types';
-import { InlineEdit } from './InlineEdit';
+import { useFolderSections } from '../hooks/useFolderSections';
+import { DRAG_KEY_BOOKMARK_FOLDER, FolderItem } from './FolderItem';
+import { DRAG_KEY_SECTION, SectionDivider } from './SectionDivider';
+
+// ─── Types ──────────────────────────────────────────────────────
+
+/** Discriminated union for drag-over visual feedback targets. */
+type DragOverTarget =
+  | { type: 'folder'; folderId: string }
+  | { type: 'section'; sectionId: string }
+  | null;
 
 interface FolderListProps {
   folders: BookmarkFolder[];
@@ -14,6 +24,8 @@ interface FolderListProps {
   onMoveBookmark: (bookmarkId: string, targetFolderId: string) => void;
 }
 
+// ─── Component ──────────────────────────────────────────────────
+
 export function FolderList({
   folders,
   isFetching,
@@ -25,25 +37,124 @@ export function FolderList({
   onMoveBookmark,
 }: FolderListProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<DragOverTarget>(null);
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [newSectionLabel, setNewSectionLabel] = useState('');
 
-  const toggleFolder = (folderId: string) => {
+  const {
+    sections,
+    collapsed,
+    addSection,
+    renameSection,
+    deleteSection,
+    toggleCollapsed,
+    assignFolderToSection,
+    reorderSections,
+  } = useFolderSections();
+
+  // ── Derived data ────────────────────────────────────────────
+
+  /** Quick lookup: folderId → BookmarkFolder */
+  const folderById = useMemo(() => {
+    const map = new Map<string, BookmarkFolder>();
+    for (const f of folders) map.set(f.id, f);
+    return map;
+  }, [folders]);
+
+  /** Set of folder IDs assigned to any section. */
+  const assignedFolderIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of sections) {
+      for (const fid of s.folderIds) set.add(fid);
+    }
+    return set;
+  }, [sections]);
+
+  /** Folders not assigned to any section. */
+  const unsortedFolders = useMemo(
+    () => folders.filter((f) => !assignedFolderIds.has(f.id)),
+    [folders, assignedFolderIds],
+  );
+
+  const hasSections = sections.length > 0;
+
+  // ── Folder toggle ───────────────────────────────────────────
+
+  const toggleFolder = useCallback((folderId: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
       return next;
     });
-  };
+  }, []);
+
+  // ── Bookmark drop handler (existing behavior) ──────────────
+
+  const handleBookmarkDragOver = useCallback((folderId: string, e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes(DRAG_KEY_BOOKMARK_FOLDER)) return;
+    e.preventDefault();
+    setDragOverTarget({ type: 'folder', folderId });
+  }, []);
+
+  const handleBookmarkDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverTarget(null);
+    }
+  }, []);
+
+  const handleBookmarkDrop = useCallback(
+    (targetFolderId: string, e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOverTarget(null);
+      const bookmarkId = e.dataTransfer.getData('text/plain');
+      const sourceFolderId = e.dataTransfer.getData('application/x-folder-id');
+      if (bookmarkId && sourceFolderId !== targetFolderId) {
+        onMoveBookmark(bookmarkId, targetFolderId);
+      }
+    },
+    [onMoveBookmark],
+  );
+
+  // ── Add section ─────────────────────────────────────────────
+
+  const handleAddSection = useCallback(() => {
+    const trimmed = newSectionLabel.trim();
+    if (!trimmed) return;
+    addSection(trimmed);
+    setNewSectionLabel('');
+    setIsAddingSection(false);
+  }, [newSectionLabel, addSection]);
+
+  // ── Render helpers ──────────────────────────────────────────
+
+  const renderFolderItem = (folder: BookmarkFolder) => (
+    <FolderItem
+      key={folder.id}
+      folder={folder}
+      isExpanded={expandedFolders.has(folder.id)}
+      isDragOver={dragOverTarget?.type === 'folder' && dragOverTarget.folderId === folder.id}
+      onToggleExpand={() => toggleFolder(folder.id)}
+      onOpenFolder={() => onOpenFolder(folder.id)}
+      onDeleteFolder={() => onDeleteFolder(folder.id)}
+      onOpenBookmark={onOpenBookmark}
+      onDeleteBookmark={onDeleteBookmark}
+      onRenameFolder={(newName) => onRenameFolder(folder.id, newName)}
+      onBookmarkDragOver={(e) => handleBookmarkDragOver(folder.id, e)}
+      onBookmarkDragLeave={handleBookmarkDragLeave}
+      onBookmarkDrop={(e) => handleBookmarkDrop(folder.id, e)}
+    />
+  );
+
+  // ── Loading state ───────────────────────────────────────────
 
   if (isFetching && folders.length === 0) {
     return (
       <div className="py-6 text-center text-(--color-grey) text-[13px]">Loading folders...</div>
     );
   }
+
+  // ── Main render ─────────────────────────────────────────────
 
   return (
     <section>
@@ -52,226 +163,163 @@ export function FolderList({
           Bookmark Folders
         </h2>
       </div>
+
       {folders.length === 0 ? (
         <div className="px-2 py-3 text-center text-[13px] opacity-60">
           No bookmark folders in the Bookmarks Bar.
         </div>
       ) : (
         <div className="flex flex-col gap-0.5">
-          {folders.map((folder) => {
-            const isExpanded = expandedFolders.has(folder.id);
+          {/* Named sections + their folders */}
+          {sections.map((section, sectionIndex) => {
+            // Filter out stale folder IDs (deleted externally in Chrome)
+            const sectionFolders = section.folderIds
+              .map((fid) => folderById.get(fid))
+              .filter((f): f is BookmarkFolder => f !== undefined);
+
+            const isCollapsed = collapsed[section.id] ?? false;
+
             return (
-              // biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone
+              // biome-ignore lint/a11y/noStaticElementInteractions: Drop target for section reorder + folder assignment
               <div
-                key={folder.id}
+                key={section.id}
                 className={clsx(
-                  'flex flex-col gap-0.5',
-                  dragOverFolderId === folder.id && 'drop-target',
+                  'rounded',
+                  dragOverTarget?.type === 'section' &&
+                    dragOverTarget.sectionId === section.id &&
+                    'drop-target',
                 )}
                 onDragOver={(e) => {
+                  const types = e.dataTransfer.types;
+                  if (
+                    !types.includes(DRAG_KEY_SECTION) &&
+                    !types.includes(DRAG_KEY_BOOKMARK_FOLDER)
+                  )
+                    return;
                   e.preventDefault();
-                  setDragOverFolderId(folder.id);
+                  e.dataTransfer.dropEffect = 'move';
+                  setDragOverTarget({ type: 'section', sectionId: section.id });
                 }}
                 onDragLeave={(e) => {
                   if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                    setDragOverFolderId(null);
+                    setDragOverTarget(null);
                   }
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  setDragOverFolderId(null);
-                  const bookmarkId = e.dataTransfer.getData('text/plain');
-                  const sourceFolderId = e.dataTransfer.getData('application/x-folder-id');
-                  if (bookmarkId && sourceFolderId !== folder.id) {
-                    onMoveBookmark(bookmarkId, folder.id);
+                  setDragOverTarget(null);
+                  const draggedId = e.dataTransfer.getData(DRAG_KEY_SECTION);
+                  if (draggedId) {
+                    const fromIndex = sections.findIndex((s) => s.id === draggedId);
+                    if (fromIndex !== -1) reorderSections(fromIndex, sectionIndex);
+                    return;
                   }
+                  const folderId = e.dataTransfer.getData(DRAG_KEY_BOOKMARK_FOLDER);
+                  if (folderId) assignFolderToSection(folderId, section.id);
                 }}
               >
-                {/* Folder header row */}
-                <div className="group/header mb-1 flex items-center gap-1.5 py-1">
-                  <button
-                    type="button"
-                    className="flex shrink-0 cursor-pointer items-center gap-2 border-0 bg-transparent text-left font-sans text-inherit"
-                    onClick={() => toggleFolder(folder.id)}
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={`shrink-0 opacity-50 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                      role="img"
-                      aria-label="Toggle folder"
-                    >
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="shrink-0 opacity-60"
-                      role="img"
-                      aria-label="Folder"
-                    >
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </button>
-                  <InlineEdit
-                    value={folder.title}
-                    onSave={(newName) => onRenameFolder(folder.id, newName)}
-                    className="font-semibold text-xs"
-                    suffix={
-                      <span className="rounded-md bg-white/10 light:bg-black/8 px-1.5 py-px text-[11px] opacity-0 transition-opacity duration-150 group-hover/header:opacity-100">
-                        {folder.childCount}
-                      </span>
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-blue) group-hover/header:opacity-100"
-                    onClick={() => onOpenFolder(folder.id)}
-                    title={`Open "${folder.title}" as tab group`}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      role="img"
-                      aria-label="Open as tab group"
-                    >
-                      <path d="M15 3h6v6" />
-                      <path d="M10 14 21 3" />
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"
-                    onClick={() => onDeleteFolder(folder.id)}
-                    title={`Delete "${folder.title}" folder`}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      role="img"
-                      aria-label="Delete"
-                    >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Expanded bookmark list */}
-                {isExpanded && folder.bookmarks && (
-                  <div className="ml-3.5 flex flex-col gap-0.5 border-white/10 light:border-black/10 border-l pl-1.5">
-                    {folder.bookmarks.length === 0 ? (
-                      <div className="px-2 py-1.5 text-[12px] opacity-40">Empty folder</div>
+                <SectionDivider
+                  sectionId={section.id}
+                  label={section.label}
+                  isCollapsed={isCollapsed}
+                  onToggleCollapsed={() => toggleCollapsed(section.id)}
+                  onRename={(newLabel) => renameSection(section.id, newLabel)}
+                  onDelete={() => deleteSection(section.id)}
+                />
+                {!isCollapsed && (
+                  <div className="flex flex-col gap-0.5">
+                    {sectionFolders.length === 0 ? (
+                      <div className="px-6 py-1.5 text-[12px] opacity-40">
+                        No folders in this section
+                      </div>
                     ) : (
-                      folder.bookmarks.map((bookmark) => {
-                        let faviconUrl = '';
-                        try {
-                          const domain = new URL(bookmark.url).hostname;
-                          faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-                        } catch {
-                          // Invalid URL — use fallback
-                        }
-
-                        return (
-                          // biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop source
-                          <div
-                            key={bookmark.id}
-                            className="group/row flex cursor-grab items-center rounded-md transition-colors duration-150 hover:bg-white/5 light:hover:bg-black/5 active:cursor-grabbing"
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', bookmark.id);
-                              e.dataTransfer.setData('application/x-folder-id', folder.id);
-                            }}
-                          >
-                            <button
-                              type="button"
-                              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent px-2 py-1.5 text-left font-sans text-inherit"
-                              onClick={() => onOpenBookmark(bookmark.url)}
-                              title={bookmark.url}
-                            >
-                              {faviconUrl ? (
-                                <img
-                                  className="h-4 w-4 shrink-0 rounded-[2px]"
-                                  src={faviconUrl}
-                                  alt=""
-                                  width={16}
-                                  height={16}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    if (e.currentTarget.nextElementSibling) {
-                                      (
-                                        e.currentTarget.nextElementSibling as HTMLElement
-                                      ).style.display = 'block';
-                                    }
-                                  }}
-                                />
-                              ) : null}
-                              <span
-                                className="h-4 w-4 shrink-0 rounded-[2px] bg-(--color-grey)"
-                                style={{ display: faviconUrl ? 'none' : 'block' }}
-                              />
-                              <span className="truncate text-[13px]">
-                                {bookmark.title || bookmark.url}
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/row:opacity-100"
-                              onClick={() => onDeleteBookmark(bookmark.id, folder.id)}
-                              title="Delete bookmark"
-                            >
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                role="img"
-                                aria-label="Delete"
-                              >
-                                <path d="M18 6 6 18" />
-                                <path d="m6 6 12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                        );
-                      })
+                      sectionFolders.map(renderFolderItem)
                     )}
                   </div>
                 )}
               </div>
             );
           })}
+
+          {/* Unsorted folders (or all folders when no sections exist) */}
+          {hasSections && unsortedFolders.length > 0 ? (
+            // biome-ignore lint/a11y/noStaticElementInteractions: Drop target for folder unassignment
+            <div
+              className={clsx(
+                'rounded',
+                dragOverTarget?.type === 'section' &&
+                  dragOverTarget.sectionId === 'unsorted' &&
+                  'drop-target',
+              )}
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes(DRAG_KEY_BOOKMARK_FOLDER)) {
+                  e.preventDefault();
+                  setDragOverTarget({ type: 'section', sectionId: 'unsorted' });
+                }
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setDragOverTarget(null);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverTarget(null);
+                const folderId = e.dataTransfer.getData(DRAG_KEY_BOOKMARK_FOLDER);
+                if (folderId) assignFolderToSection(folderId, null);
+              }}
+            >
+              <div className="flex items-center gap-2 py-1.5">
+                <span className="font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
+                  Unsorted
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">{unsortedFolders.map(renderFolderItem)}</div>
+            </div>
+          ) : (
+            (hasSections ? unsortedFolders : folders).map(renderFolderItem)
+          )}
         </div>
       )}
+
+      {/* + Add Section button */}
+      <div className="mt-2">
+        {isAddingSection ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              className="flex-1 rounded border border-white/20 light:border-black/15 bg-white/10 light:bg-white px-2 py-1 font-sans text-[12px] text-inherit outline-none focus:border-blue-500"
+              placeholder="Section name..."
+              value={newSectionLabel}
+              onChange={(e) => setNewSectionLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddSection();
+                else if (e.key === 'Escape') {
+                  setIsAddingSection(false);
+                  setNewSectionLabel('');
+                }
+              }}
+              onBlur={() => {
+                if (newSectionLabel.trim()) handleAddSection();
+                else {
+                  setIsAddingSection(false);
+                  setNewSectionLabel('');
+                }
+              }}
+              // biome-ignore lint/a11y/noAutofocus: UX requirement — user just clicked "+ Add Section"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="w-full cursor-pointer rounded-md border border-dashed border-white/15 light:border-black/15 bg-transparent py-1.5 font-sans text-(--color-grey) text-[12px] transition-colors duration-150 hover:border-white/30 light:hover:border-black/30 hover:text-white/87 light:hover:text-(--color-text-light)"
+            onClick={() => setIsAddingSection(true)}
+          >
+            + Add Section
+          </button>
+        )}
+      </div>
     </section>
   );
 }

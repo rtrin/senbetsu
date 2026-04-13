@@ -191,6 +191,19 @@ export interface BookmarkFolder {
   bookmarks: BookmarkItem[];
 }
 
+// ─── Folder Sections ─────────────────────────────────────────────
+
+export interface FolderSection {
+  id: string;
+  label: string;
+  folderIds: string[];
+}
+
+export interface FolderSectionsState {
+  sections: FolderSection[];
+  collapsed: Record<string, boolean>;
+}
+
 // ─── Classification ──────────────────────────────────────────────
 
 export interface TabClassificationInput {

@@ -1,4 +1,3 @@
-import { OPENAI_MODEL } from './constants';
 import type {
   AIGroupingResponse,
   ClassificationResult,
@@ -6,6 +5,8 @@ import type {
   OpenAIChatResponse,
   TabClassificationInput,
 } from './types';
+
+const OPENAI_MODEL = 'gpt-4o-mini';
 
 function getSystemPrompt(
   userPrompt?: string,
