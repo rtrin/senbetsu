@@ -2,7 +2,7 @@
   "name": "Senbetsu - AI Tab Manager",
   "description": "Organize, save, and free up memory with this powerful tab manager. Plug in your own OpenAI key for instant AI tab grouping.",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "type": "module",
   "scripts": {
     "dev": "wxt",
