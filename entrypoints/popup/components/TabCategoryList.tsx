@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
 import { isClassifiableUrl } from '@/lib/utils';
+import { CopyLinksButton } from './CopyLinksButton';
 import { InlineEdit } from './InlineEdit';
 import { NoteEdit } from './NoteEdit';
 import { TabItem } from './TabItem';
@@ -105,28 +106,10 @@ export function TabCategoryList({
                   </span>
                 }
               />
-              <button
-                type="button"
-                className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-orange) group-hover/header:opacity-100"
-                onClick={() => onUngroupTabs(groupTabs.map((t) => t.id!))}
-                title={`Ungroup all tabs in "${groupName}"`}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  role="img"
-                  aria-label="Ungroup"
-                >
-                  <rect x="1" y="1" width="10" height="10" rx="2" />
-                  <rect x="13" y="13" width="10" height="10" rx="2" />
-                </svg>
-              </button>
+              <CopyLinksButton
+                links={groupTabs.map((t) => ({ title: t.title ?? t.url!, url: t.url! }))}
+                groupName={groupName}
+              />
               <button
                 type="button"
                 className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-blue) group-hover/header:opacity-100"
@@ -151,6 +134,28 @@ export function TabCategoryList({
                   aria-label="Save to folder"
                 >
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-orange) group-hover/header:opacity-100"
+                onClick={() => onUngroupTabs(groupTabs.map((t) => t.id!))}
+                title={`Ungroup all tabs in "${groupName}"`}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="img"
+                  aria-label="Ungroup"
+                >
+                  <rect x="1" y="1" width="10" height="10" rx="2" />
+                  <rect x="13" y="13" width="10" height="10" rx="2" />
                 </svg>
               </button>
               <button
@@ -224,6 +229,10 @@ export function TabCategoryList({
           <div className="group/header mb-1 flex items-center gap-1.5 py-1">
             <span className="h-2 w-2 shrink-0 rounded-full border-(--color-grey) border-[1.5px] border-dashed bg-transparent" />
             <span className="flex-1 font-semibold text-xs">Ungrouped</span>
+            <CopyLinksButton
+              links={ungrouped.map((t) => ({ title: t.title ?? t.url!, url: t.url! }))}
+              groupName="Ungrouped"
+            />
             <button
               type="button"
               className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-red) group-hover/header:opacity-100"

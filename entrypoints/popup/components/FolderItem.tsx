@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type { BookmarkFolder } from '@/lib/types';
+import { CopyLinksButton } from './CopyLinksButton';
 import { InlineEdit } from './InlineEdit';
 
 // ─── Drag Keys ──────────────────────────────────────────────────
@@ -101,6 +102,10 @@ export function FolderItem({
               {folder.childCount}
             </span>
           }
+        />
+        <CopyLinksButton
+          links={folder.bookmarks.map((b) => ({ title: b.title || b.url, url: b.url }))}
+          groupName={folder.title}
         />
         <button
           type="button"
