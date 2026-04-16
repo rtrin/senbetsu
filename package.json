@@ -1,5 +1,5 @@
 {
-  "name": "Senbetsu - AI Tab Manager",
+  "name": "Senbetsu - AI Tab Manager & Group Organizer",
   "description": "Organize, save, and free up memory with this powerful tab manager. Plug in your own OpenAI key for instant AI tab grouping.",
   "private": true,
   "version": "1.0.6",
