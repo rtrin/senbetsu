@@ -27,22 +27,4 @@ Best,
 Richard
 Creator of Senbetsu
 
----
-
-## Pro Tier
-
-Hi there,
-
-Thank you so much for subscribing to Senbetsu Pro! Your support means the world to an independent developer, and I’m thrilled to have you onboard.
-
-With Senbetsu Pro, you now have unlimited access to AI tab grouping—no API keys required. We handle everything securely in the background so you can focus on working without the clutter.
-
-Your license key should be activated automatically. If you ever need to enter it manually, just click the Senbetsu icon in your Chrome toolbar, head over to the **Settings** tab, and enter your license key.
-
-If you run into any issues at all, or if you have any feature requests to make Senbetsu even better, just hit reply to this email. I read every message.
-
-Happy organizing!
-
-Best,
-Richard
 Creator of Senbetsu

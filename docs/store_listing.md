@@ -41,27 +41,8 @@ tab manager, AI tab grouper, tab organizer, memory tracker, reduce RAM, auto gro
 
 ---
 
-## Pricing Strategy Context
+## Pricing
 
-For BYOK at $10, it's actually on the high side for what the user gets. Consider:
+**Free** — all core features (drag & drop, memory tracking, folder workspaces, annotations, copy links as markdown, tab navigation).
 
-**The user's perspective with BYOK:**
-- They're already paying OpenAI for every API call
-- They're essentially paying $10 for the privilege of using their own key
-- The extension itself is the only value — no ongoing service from you
-
-**Market comparison:**
-- Most BYOK AI tools charge $0-5 for the wrapper, or just make it free
-- $10 for a Chrome extension is above average (most paid extensions are $1-5)
-
-**Pricing Suggestion:**
-
-| Tier | Price | Reasoning |
-| :--- | :--- | :--- |
-| **Free** | $0, 10/day | Hook for user acquisition |
-| **Pro** | $5/mo | Makes sense — you're covering API costs + providing value |
-| **BYOK** | $3-5 one-time | Low barrier since user already pays OpenAI. You still get something for building the tool |
-
-Alternatively, you could make BYOK free and treat it as your "community" tier — users who bring their own key cost you nothing, and they spread word-of-mouth. Your real revenue comes from Pro subscribers who don't want to deal with API keys.
-
-The Pro sub at $5/mo is well-priced. That's where your recurring revenue comes from. BYOK is more of a "power user escape hatch" — price it low or free to avoid friction.
+**BYOK lifetime license — $5 one-time** — unlocks AI tab grouping. Bring your own OpenAI key; it's stored locally in `chrome.storage.local` and never touches our servers. OpenAI API costs for tab grouping are negligible—most users won't spend $1/month.
