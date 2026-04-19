@@ -16,7 +16,6 @@ export type TabGroupColor =
 // ─── Settings ───────────────────────────────────────────────────
 
 export interface AppSettings {
-  licenseKey?: string;
   openaiApiKey?: string;
   bookmarkAutoClose?: boolean;
   preserveExistingGroups?: boolean;
@@ -72,18 +71,9 @@ export interface CmdMoveTabToGroup {
   targetGroupName: string;
 }
 
-export interface CmdActivateLicense {
-  type: 'CMD_ACTIVATE_LICENSE';
-  licenseKey: string;
-}
-
 export interface CmdSaveSettings {
   type: 'CMD_SAVE_SETTINGS';
   openaiApiKey?: string | null;
-}
-
-export interface CmdDeactivateLicense {
-  type: 'CMD_DEACTIVATE_LICENSE';
 }
 
 export interface CmdBookmarkTab {
@@ -153,9 +143,7 @@ export type PopupCommand =
   | CmdGetMemoryUsage
   | CmdClassifyUnsorted
   | CmdMoveTabToGroup
-  | CmdActivateLicense
   | CmdSaveSettings
-  | CmdDeactivateLicense
   | CmdBookmarkTab
   | CmdSaveGroupToFolder
   | CmdOpenFolderAsGroup

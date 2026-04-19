@@ -1,6 +1,5 @@
 import { classifyTabs } from './ai';
 import { applyClassifications, moveTabToGroup } from './grouping';
-import { activateLicense, deactivateLicense } from './license';
 import { measureTabMemory } from './memory';
 import { storage } from './storage';
 import type { CommandResponse, TabClassificationInput } from './types';
@@ -161,32 +160,6 @@ export async function handleMoveTabToGroup(
 ): Promise<CommandResponse> {
   try {
     await moveTabToGroup(tabId, targetGroupName);
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
-export async function handleActivateLicense(licenseKey: string): Promise<CommandResponse> {
-  try {
-    const result = await activateLicense(licenseKey);
-    if (!result.valid) {
-      return { ok: false, error: result.error ?? 'License activation failed' };
-    }
-    await storage.activate(licenseKey);
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
-export async function handleDeactivateLicense(): Promise<CommandResponse> {
-  try {
-    const settings = await storage.getSettings();
-    if (settings.licenseKey) {
-      await deactivateLicense(settings.licenseKey);
-    }
-    await storage.deactivate();
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };

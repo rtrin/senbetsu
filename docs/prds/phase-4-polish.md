@@ -13,7 +13,7 @@ The final phase focuses on user experience improvements, advanced tab management
 - Create a guided first-run experience.
 - Explain the passive nature of the auto-grouping (how it works in the background).
 - Show users where to find the popup and how to use custom spaces.
-- If applicable, guide users to enter their BYOK (API key) or sign up for a free tier.
+- Guide users to enter their OpenAI API key for AI tab grouping.
 
 ### 3. Chrome Web Store Preparation
 - Design promotional assets (Store icon, screenshots, promo video).

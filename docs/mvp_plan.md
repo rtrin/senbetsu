@@ -39,24 +39,12 @@ Given that the core product is passive auto-grouping with zero input, the build 
 
 ---
 
-## Phase 3: Monetization & Auth
+## Phase 3: BYOK Setup
 
 - **BYOK (Bring Your Own Key) Flow**
-  - Settings page where the user enters their API key.
+  - Settings page where the user enters their OpenAI API key.
   - Store in `chrome.storage.local` (never leaves their machine).
-- **Backend for Free/Pro Tiers**
-  - Lightweight server (e.g., Supabase) for:
-    - Authentication.
-    - Credit tracking.
-    - Proxying AI calls through your key.
-- **Tier Gating**
-  - Free: 1 space / 5 credits.
-  - Pro: Unlimited.
-  - BYOK: Key passthrough.
-- **Payment Integration**
-  - Stripe integration.
-  - $5/month subscription.
-  - $19 one-time purchase.
+  - All features free, no license required.
 
 ---
 

@@ -27,15 +27,4 @@ export const storage = {
       await this.updateSettings({ openaiApiKey: key });
     }
   },
-
-  async activate(licenseKey: string): Promise<void> {
-    await this.updateSettings({ licenseKey });
-  },
-
-  async deactivate(): Promise<void> {
-    await this.updateSettings({
-      licenseKey: undefined,
-      openaiApiKey: undefined,
-    });
-  },
 };

@@ -43,6 +43,4 @@ tab manager, AI tab grouper, tab organizer, memory tracker, reduce RAM, auto gro
 
 ## Pricing
 
-**Free** — all core features (drag & drop, memory tracking, folder workspaces, annotations, copy links as markdown, tab navigation).
-
-**BYOK lifetime license — $5 one-time** — unlocks AI tab grouping. Bring your own OpenAI key; it's stored locally in `chrome.storage.local` and never touches our servers. OpenAI API costs for tab grouping are negligible—most users won't spend $1/month.
+**Free** — all features including AI tab grouping. Bring your own OpenAI key; it's stored locally in `chrome.storage.local` and never touches our servers. OpenAI API costs for tab grouping are negligible—most users won't spend $1/month.

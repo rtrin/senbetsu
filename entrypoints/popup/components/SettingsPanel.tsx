@@ -10,46 +10,12 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: SettingsPanelProps) {
-  const [licenseKey, setLicenseKey] = useState('');
   const [apiKey, setApiKey] = useState(settings.openaiApiKey ?? '');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [isActivating, setIsActivating] = useState(false);
-  const [isDeactivating, setIsDeactivating] = useState(false);
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [error, setError] = useState('');
   const bookmarkAutoClose = settings.bookmarkAutoClose !== false;
   const preserveExistingGroups = settings.preserveExistingGroups !== false;
-
-  const handleActivate = async () => {
-    if (!licenseKey.trim()) return;
-    setIsActivating(true);
-    setError('');
-    try {
-      const resp = await sendCommand({
-        type: 'CMD_ACTIVATE_LICENSE',
-        licenseKey: licenseKey.trim(),
-      });
-      if (resp.ok) {
-        setLicenseKey('');
-        onSettingsChanged();
-      } else {
-        setError(resp.error ?? 'Activation failed');
-      }
-    } finally {
-      setIsActivating(false);
-    }
-  };
-
-  const handleDeactivate = async () => {
-    setIsDeactivating(true);
-    setError('');
-    try {
-      await sendCommand({ type: 'CMD_DEACTIVATE_LICENSE' });
-      onSettingsChanged();
-    } finally {
-      setIsDeactivating(false);
-    }
-  };
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
@@ -99,116 +65,49 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
 
   return (
     <section className="flex flex-col gap-4">
-      {/* License Key */}
+      {/* OpenAI API Key */}
       <div className="flex flex-col gap-2">
         <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
-          License Key
+          OpenAI API Key
         </h3>
-        {settings.licenseKey ? (
-          <div className="flex items-center justify-between rounded-md bg-white/4 light:bg-black/3 p-2">
-            <span className="font-medium text-[13px]">BYOK license active</span>
+        <div className="flex gap-2">
+          <input
+            type={showApiKey ? 'text' : 'password'}
+            className={inputClass}
+            placeholder="sk-..."
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+          />
+          <button
+            type="button"
+            className={btnGhost}
+            onClick={() => setShowApiKey(!showApiKey)}
+            title={showApiKey ? 'Hide' : 'Show'}
+          >
+            {showApiKey ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className={btnPrimarySm}
+            onClick={handleSaveApiKey}
+            disabled={isSavingKey || !apiKey.trim()}
+          >
+            {isSavingKey ? 'Saving...' : 'Save'}
+          </button>
+          {settings.openaiApiKey && (
             <button
               type="button"
               className={clsx(btnGhost, 'enabled:hover:text-(--color-red)')}
-              onClick={handleDeactivate}
-              disabled={isDeactivating}
+              onClick={handleRemoveApiKey}
+              disabled={isSavingKey}
             >
-              {isDeactivating ? 'Deactivating...' : 'Deactivate'}
+              Remove Key
             </button>
-          </div>
-        ) : (
-          <>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="Enter license key"
-                value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value)}
-              />
-              <button
-                type="button"
-                className={btnPrimarySm}
-                onClick={handleActivate}
-                disabled={isActivating || !licenseKey.trim()}
-              >
-                {isActivating ? 'Activating...' : 'Activate'}
-              </button>
-            </div>
-            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
-                onClick={() =>
-                  chrome.tabs.create({
-                    url: 'https://senbetsu.lemonsqueezy.com/checkout/buy/26f29df0-6431-4c43-9eee-ca107f88323a',
-                  })
-                }
-              >
-                Get a BYOK license at senbetsu.lemonsqueezy.com →
-              </button>
-            </p>
-            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
-              Already purchased?{' '}
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
-                onClick={() =>
-                  chrome.tabs.create({ url: 'https://app.lemonsqueezy.com/my-orders/login' })
-                }
-              >
-                View your license keys →
-              </button>
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* OpenAI API Key (only when licensed) */}
-      {settings.licenseKey && (
-        <div className="flex flex-col gap-2">
-          <h3 className="m-0 font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
-            OpenAI API Key
-          </h3>
-          <div className="flex gap-2">
-            <input
-              type={showApiKey ? 'text' : 'password'}
-              className={inputClass}
-              placeholder="sk-..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-            <button
-              type="button"
-              className={btnGhost}
-              onClick={() => setShowApiKey(!showApiKey)}
-              title={showApiKey ? 'Hide' : 'Show'}
-            >
-              {showApiKey ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={btnPrimarySm}
-              onClick={handleSaveApiKey}
-              disabled={isSavingKey || !apiKey.trim()}
-            >
-              {isSavingKey ? 'Saving...' : 'Save'}
-            </button>
-            {settings.openaiApiKey && (
-              <button
-                type="button"
-                className={clsx(btnGhost, 'enabled:hover:text-(--color-red)')}
-                onClick={handleRemoveApiKey}
-                disabled={isSavingKey}
-              >
-                Remove Key
-              </button>
-            )}
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {error && (
         <div className="rounded-md bg-red-500/10 light:bg-red-500/8 px-3 py-2 text-(--color-red) text-xs">
@@ -302,22 +201,33 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
             </button>
           </p>
         </div>
-        {settings.licenseKey && (
-          <div className="flex items-start gap-2">
-            <span className="shrink-0 text-[14px] leading-[1.5]">🔑</span>
-            <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
-              Need an OpenAI key?{' '}
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
-                onClick={() => chrome.tabs.create({ url: 'https://platform.openai.com/api-keys' })}
-              >
-                Get one at platform.openai.com →
-              </button>{' '}
-              Create an account, go to API Keys, and generate a new secret key.
-            </p>
-          </div>
-        )}
+        <div className="flex items-start gap-2">
+          <span className="shrink-0 text-[14px] leading-[1.5]">🔑</span>
+          <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
+            Need an OpenAI key?{' '}
+            <button
+              type="button"
+              className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
+              onClick={() => chrome.tabs.create({ url: 'https://platform.openai.com/api-keys' })}
+            >
+              Get one at platform.openai.com →
+            </button>{' '}
+            Create an account, go to API Keys, and generate a new secret key.
+          </p>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="shrink-0 text-[14px] leading-[1.5]">☕</span>
+          <p className="m-0 text-(--color-grey) text-xs leading-[1.5]">
+            Love Senbetsu?{' '}
+            <button
+              type="button"
+              className="cursor-pointer border-0 bg-transparent p-0 font-sans text-blue-500 text-xs no-underline hover:underline"
+              onClick={() => chrome.tabs.create({ url: 'https://ko-fi.com/8bits' })}
+            >
+              Support development on Ko-fi →
+            </button>
+          </p>
+        </div>
       </div>
     </section>
   );

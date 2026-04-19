@@ -30,11 +30,10 @@ describe('storage.getSettings', () => {
   });
 
   it('returns stored settings', async () => {
-    const custom = { ...DEFAULT_SETTINGS, licenseKey: 'abc', openaiApiKey: 'sk-123' };
+    const custom = { ...DEFAULT_SETTINGS, openaiApiKey: 'sk-123' };
     mockStore.senbetsu_settings = custom;
 
     const settings = await storage.getSettings();
-    expect(settings.licenseKey).toBe('abc');
     expect(settings.openaiApiKey).toBe('sk-123');
   });
 });
@@ -60,29 +59,6 @@ describe('storage.saveApiKey', () => {
 
     await storage.saveApiKey(null);
     const settings = await storage.getSettings();
-    expect(settings.openaiApiKey).toBeUndefined();
-  });
-});
-
-describe('storage.activate', () => {
-  it('saves license key', async () => {
-    await storage.activate('license-abc');
-    const settings = await storage.getSettings();
-    expect(settings.licenseKey).toBe('license-abc');
-  });
-});
-
-describe('storage.deactivate', () => {
-  it('clears license key and API key', async () => {
-    mockStore.senbetsu_settings = {
-      ...DEFAULT_SETTINGS,
-      licenseKey: 'abc',
-      openaiApiKey: 'sk-123',
-    };
-
-    await storage.deactivate();
-    const settings = await storage.getSettings();
-    expect(settings.licenseKey).toBeUndefined();
     expect(settings.openaiApiKey).toBeUndefined();
   });
 });

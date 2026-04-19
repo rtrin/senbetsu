@@ -1,10 +1,8 @@
 import {
-  handleActivateLicense,
   handleBookmarkTab,
   handleClassifyUnsorted,
   handleCloseGroup,
   handleCloseTab,
-  handleDeactivateLicense,
   handleDeleteBookmark,
   handleDeleteFolder,
   handleGetBookmarkFolders,
@@ -62,12 +60,6 @@ export default defineBackground(() => {
           break;
         case 'CMD_MOVE_TAB_TO_GROUP':
           responsePromise = handleMoveTabToGroup(message.tabId, message.targetGroupName);
-          break;
-        case 'CMD_ACTIVATE_LICENSE':
-          responsePromise = handleActivateLicense(message.licenseKey);
-          break;
-        case 'CMD_DEACTIVATE_LICENSE':
-          responsePromise = handleDeactivateLicense();
           break;
         case 'CMD_SAVE_SETTINGS':
           responsePromise = handleSaveSettings(message.openaiApiKey ?? null);

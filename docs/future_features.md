@@ -47,7 +47,7 @@ Maintain a history of tab groups/folders that overrides local groupings.
 > NOTE: Keep solutions elegant and simple!
 
 ### Marketing
-- Update landing page to include chrome web store / lemonsqueezy links
+- Update landing page to include chrome web store links
 
 ### Memory
 - Critical: browser crashes when trying to group too many tabs at once (investigate further)
