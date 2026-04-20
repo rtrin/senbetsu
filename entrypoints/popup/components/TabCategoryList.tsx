@@ -14,12 +14,10 @@ interface TabCategoryListProps {
   onCloseGroup: (tabIds: number[]) => void;
   onMoveTabToGroup: (tabId: number, targetGroupName: string) => void;
   onBookmarkTab: (tabId: number) => void;
-  onSaveGroupToFolder: (tabIds: number[], groupName: string) => void;
+  onSaveGroupToFolder: (tabIds: number[], groupName: string, groupId?: number) => void;
   onRenameGroup: (groupId: number, newName: string) => void;
   onUngroupTabs: (tabIds: number[]) => void;
-  getTabAnnotation: (tabId: number) => string;
   getGroupAnnotation: (groupId: number) => string;
-  onAnnotateTab: (tabId: number, text: string) => void;
   onAnnotateGroup: (groupId: number, text: string) => void;
 }
 
@@ -34,12 +32,11 @@ export function TabCategoryList({
   onSaveGroupToFolder,
   onRenameGroup,
   onUngroupTabs,
-  getTabAnnotation,
   getGroupAnnotation,
-  onAnnotateTab,
   onAnnotateGroup,
 }: TabCategoryListProps) {
   const [dragOverGroupId, setDragOverGroupId] = useState<number | null>(null);
+  const [isAddingNote, setIsAddingNote] = useState<Record<number, boolean>>({});
 
   const validTabs = tabs.filter((t) => t.id && t.url);
   if (validTabs.length === 0) return null;
@@ -67,6 +64,7 @@ export function TabCategoryList({
         const group = groups.get(groupId);
         const groupName = group?.title || 'Unnamed Group';
         const colorVar = group?.color ? `var(--color-${group.color})` : 'var(--color-grey)';
+        const hasNote = !!getGroupAnnotation(groupId);
 
         return (
           // biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone
@@ -110,6 +108,30 @@ export function TabCategoryList({
                 links={groupTabs.map((t) => ({ title: t.title ?? t.url!, url: t.url! }))}
                 groupName={groupName}
               />
+              {!hasNote && (
+                <button
+                  type="button"
+                  className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-yellow) group-hover/header:opacity-100"
+                  onClick={() => setIsAddingNote((prev) => ({ ...prev, [groupId]: true }))}
+                  title="Add note"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    role="img"
+                    aria-label="Add note"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
+                  </svg>
+                </button>
+              )}
               <button
                 type="button"
                 className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-blue) group-hover/header:opacity-100"
@@ -117,6 +139,7 @@ export function TabCategoryList({
                   onSaveGroupToFolder(
                     groupTabs.map((t) => t.id!),
                     groupName,
+                    groupId,
                   )
                 }
                 title={`Save "${groupName}" as bookmark folder`}
@@ -181,10 +204,15 @@ export function TabCategoryList({
                 </svg>
               </button>
             </div>
-            <NoteEdit
-              value={getGroupAnnotation(groupId)}
-              onSave={(text) => onAnnotateGroup(groupId, text)}
-            />
+            {(hasNote || isAddingNote[groupId]) && (
+              <NoteEdit
+                value={getGroupAnnotation(groupId)}
+                onSave={(text) => {
+                  onAnnotateGroup(groupId, text);
+                  if (!text.trim()) setIsAddingNote((prev) => ({ ...prev, [groupId]: false }));
+                }}
+              />
+            )}
             {groupTabs.map((tab) => (
               <TabItem
                 key={tab.id}
@@ -196,8 +224,6 @@ export function TabCategoryList({
                 onSwitchTab={onSwitchTab}
                 onCloseTab={onCloseTab}
                 onBookmarkTab={onBookmarkTab}
-                annotation={getTabAnnotation(tab.id!)}
-                onAnnotate={(text) => onAnnotateTab(tab.id!, text)}
               />
             ))}
           </div>
@@ -268,8 +294,6 @@ export function TabCategoryList({
               onSwitchTab={onSwitchTab}
               onCloseTab={onCloseTab}
               onBookmarkTab={onBookmarkTab}
-              annotation={getTabAnnotation(tab.id!)}
-              onAnnotate={(text) => onAnnotateTab(tab.id!, text)}
             />
           ))}
         </div>

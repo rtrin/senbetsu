@@ -22,6 +22,8 @@ interface FolderListProps {
   onDeleteBookmark: (bookmarkId: string, folderId: string) => void;
   onRenameFolder: (folderId: string, newName: string) => void;
   onMoveBookmark: (bookmarkId: string, targetFolderId: string) => void;
+  getFolderAnnotation: (folderId: string) => string;
+  onAnnotateFolder: (folderId: string, text: string) => void;
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -35,6 +37,8 @@ export function FolderList({
   onDeleteBookmark,
   onRenameFolder,
   onMoveBookmark,
+  getFolderAnnotation,
+  onAnnotateFolder,
 }: FolderListProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [dragOverTarget, setDragOverTarget] = useState<DragOverTarget>(null);
@@ -143,6 +147,8 @@ export function FolderList({
       onBookmarkDragOver={(e) => handleBookmarkDragOver(folder.id, e)}
       onBookmarkDragLeave={handleBookmarkDragLeave}
       onBookmarkDrop={(e) => handleBookmarkDrop(folder.id, e)}
+      annotation={getFolderAnnotation(folder.id)}
+      onAnnotate={(text) => onAnnotateFolder(folder.id, text)}
     />
   );
 

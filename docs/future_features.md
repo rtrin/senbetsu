@@ -7,6 +7,7 @@
 - Reopen folders as tab groups
 - Close groups in bulk
 - Tab/Group annotations
+- Folder annotations (persist group annotations on bookmark folders, round-trip on save/restore)
 - Inline renaming of groups and bookmark folders
 
 ## Backlog
@@ -29,6 +30,14 @@ Flag tabs untouched for a configurable duration (e.g., 2 hours, 1 day). Suggest 
 Maintain a history of tab groups/folders that overrides local groupings.
 - Scope: Medium — overlaps with Workspaces; decide if this is the same feature before building
 
+**Quick Clean-Up Workflow**
+One-click "AI sort + save all groups to folders + close" flow for rapid context switching. Targets ADHD users who switch tasks without realizing it and need a fast (<10 second) way to archive their current context before moving on. Could be a single button or keyboard shortcut that runs the full pipeline.
+- Scope: Small — orchestrates existing commands in sequence, needs a new UI trigger
+
+**Proactive Tab Sprawl Nudges**
+Detect when the user has too many ungrouped tabs or hasn't cleaned up in a while, and surface a gentle reminder (badge count, notification, or popup banner). Configurable thresholds. Helps users who don't remember to open the extension.
+- Scope: Small/Medium — background worker monitors tab count/age, badge API for visual nudge
+
 ### Medium Relevancy
 
 - Folder reordering within divider sections — drag folders to reorder within a section (data model already supports it via ordered `folderIds`)
@@ -41,6 +50,7 @@ Maintain a history of tab groups/folders that overrides local groupings.
 
 - Drag-and-drop scrollable — hovering near top/bottom while dragging should scroll
 - Agentic workflow trees — https://medium.com/@thelazyindiantechie/the-ultimate-agentic-prompt-engineering-workflow-5f3c51d958e0
+- External tool integrations (Raindrop.io, Notion) — export tab groups/folders to external bookmark/note tools for users who want their "to-do list" outside Chrome
 
 ## Doing
 

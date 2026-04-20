@@ -34,7 +34,7 @@ function App() {
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
   const [groupingError, setGroupingError] = useState('');
   const { tabs: liveTabs, groups: liveGroups, refresh: refreshLiveTabs } = useCurrentTabs();
-  const { getTabAnnotation, getGroupAnnotation, setTabAnnotation, setGroupAnnotation } =
+  const { getGroupAnnotation, getFolderAnnotation, setGroupAnnotation, setFolderAnnotation } =
     useAnnotations();
 
   const refreshSettings = useCallback(async () => {
@@ -162,16 +162,21 @@ function App() {
     sendCommand({ type: 'CMD_BOOKMARK_TAB', tabId });
   }, []);
 
-  const handleSaveGroupToFolder = useCallback(async (tabIds: number[], groupName: string) => {
-    const resp = await sendCommand({
-      type: 'CMD_SAVE_GROUP_TO_FOLDER',
-      tabIds,
-      groupName,
-    });
-    if (!resp.ok) {
-      setGroupingError(resp.error ?? 'Failed to save group');
-    }
-  }, []);
+  const handleSaveGroupToFolder = useCallback(
+    async (tabIds: number[], groupName: string, groupId?: number) => {
+      const annotation = groupId !== undefined ? getGroupAnnotation(groupId) : undefined;
+      const resp = await sendCommand({
+        type: 'CMD_SAVE_GROUP_TO_FOLDER',
+        tabIds,
+        groupName,
+        annotation: annotation || undefined,
+      });
+      if (!resp.ok) {
+        setGroupingError(resp.error ?? 'Failed to save group');
+      }
+    },
+    [getGroupAnnotation],
+  );
 
   const fetchFolders = useCallback(async () => {
     setIsFetchingFolders(true);
@@ -310,9 +315,7 @@ function App() {
           onSaveGroupToFolder={handleSaveGroupToFolder}
           onRenameGroup={handleRenameGroup}
           onUngroupTabs={handleUngroupTabs}
-          getTabAnnotation={getTabAnnotation}
           getGroupAnnotation={getGroupAnnotation}
-          onAnnotateTab={setTabAnnotation}
           onAnnotateGroup={setGroupAnnotation}
         />
       )}
@@ -327,6 +330,8 @@ function App() {
           onDeleteBookmark={handleDeleteBookmark}
           onRenameFolder={handleRenameFolder}
           onMoveBookmark={handleMoveBookmark}
+          getFolderAnnotation={getFolderAnnotation}
+          onAnnotateFolder={setFolderAnnotation}
         />
       )}
 

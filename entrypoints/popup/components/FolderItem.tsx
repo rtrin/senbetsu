@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
+import { useState } from 'react';
 import type { BookmarkFolder } from '@/lib/types';
 import { CopyLinksButton } from './CopyLinksButton';
 import { InlineEdit } from './InlineEdit';
+import { NoteEdit } from './NoteEdit';
 
 // ─── Drag Keys ──────────────────────────────────────────────────
 
@@ -22,6 +24,8 @@ interface FolderItemProps {
   onBookmarkDragOver: (e: React.DragEvent) => void;
   onBookmarkDragLeave: (e: React.DragEvent) => void;
   onBookmarkDrop: (e: React.DragEvent) => void;
+  annotation: string;
+  onAnnotate: (text: string) => void;
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -39,7 +43,12 @@ export function FolderItem({
   onBookmarkDragOver,
   onBookmarkDragLeave,
   onBookmarkDrop,
+  annotation,
+  onAnnotate,
 }: FolderItemProps) {
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const hasNote = !!annotation;
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Drag and drop dropzone
     <div
@@ -107,6 +116,30 @@ export function FolderItem({
           links={folder.bookmarks.map((b) => ({ title: b.title || b.url, url: b.url }))}
           groupName={folder.title}
         />
+        {!hasNote && (
+          <button
+            type="button"
+            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-yellow) group-hover/header:opacity-100"
+            onClick={() => setIsAddingNote(true)}
+            title="Add note"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              role="img"
+              aria-label="Add note"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
+            </svg>
+          </button>
+        )}
         <button
           type="button"
           className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) opacity-0 transition-[opacity,color] duration-150 hover:text-(--color-blue) group-hover/header:opacity-100"
@@ -153,6 +186,15 @@ export function FolderItem({
           </svg>
         </button>
       </div>
+      {(hasNote || isAddingNote) && (
+        <NoteEdit
+          value={annotation}
+          onSave={(text) => {
+            onAnnotate(text);
+            if (!text.trim()) setIsAddingNote(false);
+          }}
+        />
+      )}
 
       {/* Expanded bookmark list */}
       {isExpanded && folder.bookmarks && (

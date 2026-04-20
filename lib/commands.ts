@@ -1,7 +1,7 @@
 import { classifyTabs } from './ai';
 import { applyClassifications, moveTabToGroup } from './grouping';
 import { measureTabMemory } from './memory';
-import { storage } from './storage';
+import { getAnnotation, removeAnnotation, setAnnotation, storage } from './storage';
 import type { CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
@@ -198,6 +198,7 @@ export async function handleBookmarkTab(tabId: number): Promise<CommandResponse>
 export async function handleSaveGroupToFolder(
   tabIds: number[],
   groupName: string,
+  annotation?: string,
 ): Promise<CommandResponse> {
   try {
     const folder = await chrome.bookmarks.create({
@@ -212,6 +213,10 @@ export async function handleSaveGroupToFolder(
         title: tab.title ?? tab.url ?? 'Untitled',
         url: tab.url,
       });
+    }
+
+    if (annotation?.trim()) {
+      await setAnnotation(`folder:${folder.id}`, annotation.trim());
     }
 
     const settings = await storage.getSettings();
@@ -296,6 +301,8 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
       return { ok: false, error: 'Folder is empty' };
     }
 
+    const folderAnnotation = await getAnnotation(`folder:${folderId}`);
+
     const tabs = await Promise.all(
       bookmarks.map((b) => chrome.tabs.create({ url: b.url, active: false })),
     );
@@ -310,6 +317,10 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
       const title = folder?.title ?? 'Restored';
       const color = 'blue' as chrome.tabGroups.Color;
       await chrome.tabGroups.update(groupId, { title, color, collapsed: false });
+
+      if (folderAnnotation) {
+        await setAnnotation(`group:${groupId}`, folderAnnotation);
+      }
     }
 
     // Discard each tab after it loads to free memory (fire-and-forget)
@@ -319,6 +330,7 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
         .catch(() => {});
     }
 
+    await removeAnnotation(`folder:${folderId}`);
     await chrome.bookmarks.removeTree(folderId);
 
     return { ok: true };
@@ -330,6 +342,7 @@ export async function handleOpenFolderAsGroup(folderId: string): Promise<Command
 export async function handleDeleteFolder(folderId: string): Promise<CommandResponse> {
   try {
     await chrome.bookmarks.removeTree(folderId);
+    await removeAnnotation(`folder:${folderId}`);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };

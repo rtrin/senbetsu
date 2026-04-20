@@ -85,6 +85,7 @@ export interface CmdSaveGroupToFolder {
   type: 'CMD_SAVE_GROUP_TO_FOLDER';
   tabIds: number[];
   groupName: string;
+  annotation?: string;
 }
 
 export interface CmdOpenFolderAsGroup {

@@ -19,17 +19,9 @@ import {
   handleSwitchTab,
   handleUngroupTabs,
 } from '@/lib/commands';
-import { STORAGE_KEYS } from '@/lib/constants';
 import { cleanupWindow, removeTab } from '@/lib/grouping';
+import { removeAnnotation } from '@/lib/storage';
 import type { ExtensionMessage } from '@/lib/types';
-
-async function removeAnnotation(key: string): Promise<void> {
-  const result = await chrome.storage.local.get(STORAGE_KEYS.annotations);
-  const current = (result[STORAGE_KEYS.annotations] as Record<string, string>) ?? {};
-  if (!(key in current)) return;
-  const { [key]: _, ...rest } = current;
-  await chrome.storage.local.set({ [STORAGE_KEYS.annotations]: rest });
-}
 
 export default defineBackground(() => {
   console.log('[senbetsu] Background service worker started');
@@ -68,7 +60,11 @@ export default defineBackground(() => {
           responsePromise = handleBookmarkTab(message.tabId);
           break;
         case 'CMD_SAVE_GROUP_TO_FOLDER':
-          responsePromise = handleSaveGroupToFolder(message.tabIds, message.groupName);
+          responsePromise = handleSaveGroupToFolder(
+            message.tabIds,
+            message.groupName,
+            message.annotation,
+          );
           break;
         case 'CMD_OPEN_FOLDER_AS_GROUP':
           responsePromise = handleOpenFolderAsGroup(message.folderId);
