@@ -154,12 +154,31 @@ function App() {
     sendCommand({ type: 'CMD_CLOSE_TAB', tabId });
   }, []);
 
+  const handleOffloadTab = useCallback(
+    async (tabId: number) => {
+      await sendCommand({ type: 'CMD_OFFLOAD_TABS', tabIds: [tabId] });
+      fetchMemoryUsage();
+    },
+    [fetchMemoryUsage],
+  );
+
+  const handleOffloadAll = useCallback(async () => {
+    const tabIds = memoryInfos.map((info) => info.tabId);
+    await sendCommand({ type: 'CMD_OFFLOAD_TABS', tabIds });
+    fetchMemoryUsage();
+  }, [memoryInfos, fetchMemoryUsage]);
+
   const handleCloseGroup = useCallback((tabIds: number[]) => {
     sendCommand({ type: 'CMD_CLOSE_GROUP', tabIds });
   }, []);
 
-  const handleBookmarkTab = useCallback((tabId: number) => {
-    sendCommand({ type: 'CMD_BOOKMARK_TAB', tabId });
+  const handleBookmarkTab = useCallback(async (tabId: number) => {
+    try {
+      const resp = await sendCommand({ type: 'CMD_BOOKMARK_TAB', tabId });
+      if (!resp.ok) setGroupingError(resp.error ?? 'Failed to bookmark tab');
+    } catch {
+      setGroupingError('Failed to bookmark tab');
+    }
   }, []);
 
   const handleSaveGroupToFolder = useCallback(
@@ -184,7 +203,11 @@ function App() {
       const resp = await sendCommand({ type: 'CMD_GET_BOOKMARK_FOLDERS' });
       if (resp.ok && resp.data) {
         setFolders(resp.data as BookmarkFolder[]);
+      } else if (!resp.ok) {
+        setGroupingError(resp.error ?? 'Failed to load bookmark folders');
       }
+    } catch {
+      setGroupingError('Failed to load bookmark folders');
     } finally {
       setIsFetchingFolders(false);
     }
@@ -343,6 +366,8 @@ function App() {
           onRequestPermission={requestMemoryPermission}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
+          onOffloadTab={handleOffloadTab}
+          onOffloadAll={handleOffloadAll}
         />
       )}
 

@@ -14,6 +14,8 @@ interface MemoryUsageListProps {
   onRequestPermission: () => void;
   onSwitchTab: (tabId: number) => void;
   onCloseTab: (tabId: number) => void;
+  onOffloadTab: (tabId: number) => void;
+  onOffloadAll: () => void;
 }
 
 export function MemoryUsageList({
@@ -23,6 +25,8 @@ export function MemoryUsageList({
   onRequestPermission,
   onSwitchTab,
   onCloseTab,
+  onOffloadTab,
+  onOffloadAll,
 }: MemoryUsageListProps) {
   if (hasPermission === false) {
     return (
@@ -62,6 +66,30 @@ export function MemoryUsageList({
         <h2 className="font-semibold text-(--color-grey) text-[11px] uppercase tracking-wider">
           Memory Usage
         </h2>
+        {memoryInfos.length > 0 && (
+          <button
+            type="button"
+            className="flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-sans text-(--color-grey) text-[11px] transition-colors duration-150 hover:text-(--color-text) light:hover:text-(--color-text-light)"
+            onClick={onOffloadAll}
+            title="Offload all tabs to free memory"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              role="img"
+              aria-label="Offload all"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            Offload All
+          </button>
+        )}
       </div>
       <div className="mb-3">
         {memoryInfos.length === 0 ? (
@@ -102,6 +130,27 @@ export function MemoryUsageList({
                     {info.memoryLevel.charAt(0).toUpperCase() + info.memoryLevel.slice(1)}
                   </span>
                 )}
+              </button>
+              <button
+                type="button"
+                className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-(--color-grey) transition-[opacity,color] duration-150 hover:text-blue-400"
+                onClick={() => onOffloadTab(info.tabId)}
+                title="Offload tab"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="img"
+                  aria-label="Offload"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
               </button>
               <button
                 type="button"
