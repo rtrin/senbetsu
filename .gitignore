@@ -28,6 +28,7 @@ web-ext.config.ts
 
 # Local AI config
 CLAUDE.local.md
+.serena/
 
 # Worktrees
 .worktrees
