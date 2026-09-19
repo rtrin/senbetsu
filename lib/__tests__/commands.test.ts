@@ -20,6 +20,7 @@ vi.stubGlobal('chrome', {
   },
   bookmarks: {
     create: vi.fn(),
+    getTree: vi.fn(),
   },
   tabGroups: {
     query: vi.fn(),
@@ -50,7 +51,8 @@ vi.mock('../memory', () => ({
   measureTabMemory: vi.fn(),
 }));
 
-const { handleBookmarkTab } = await import('../commands');
+const { handleBookmarkTab, handleSaveAndGroup } = await import('../commands');
+const { classifyTabs } = await import('../ai');
 
 const mockTab = {
   id: 1,
@@ -73,6 +75,9 @@ beforeEach(() => {
     delete mockStore[key];
   }
   vi.clearAllMocks();
+  (chrome.bookmarks.getTree as ReturnType<typeof vi.fn>).mockResolvedValue([
+    { id: 'root', children: [{ id: 'toolbar-root', folderType: 'bookmarks-bar' }] },
+  ]);
 });
 
 describe('handleBookmarkTab', () => {
@@ -85,7 +90,7 @@ describe('handleBookmarkTab', () => {
 
     expect(result).toEqual({ ok: true });
     expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-      parentId: '1',
+      parentId: 'toolbar-root',
       title: 'Example',
       url: 'https://example.com',
     });
@@ -117,5 +122,67 @@ describe('handleBookmarkTab', () => {
     const result = await handleBookmarkTab(999);
 
     expect(result).toEqual({ ok: false, error: 'Error: Tab not found' });
+  });
+
+  it('returns an error without creating a bookmark when the Bookmarks Bar is missing', async () => {
+    (chrome.tabs.get as ReturnType<typeof vi.fn>).mockResolvedValue(mockTab);
+    (chrome.bookmarks.getTree as ReturnType<typeof vi.fn>).mockResolvedValue([{ id: 'root' }]);
+
+    const result = await handleBookmarkTab(1);
+
+    expect(result).toEqual({ ok: false, error: 'Error: Bookmarks Bar root folder is missing.' });
+    expect(chrome.bookmarks.create).not.toHaveBeenCalled();
+  });
+
+  it('returns an error without creating a bookmark for an ambiguous Bookmarks Bar root', async () => {
+    (chrome.tabs.get as ReturnType<typeof vi.fn>).mockResolvedValue(mockTab);
+    (chrome.bookmarks.getTree as ReturnType<typeof vi.fn>).mockResolvedValue([
+      {
+        id: 'root',
+        children: [
+          { id: 'toolbar-one', folderType: 'bookmarks-bar' },
+          { id: 'toolbar-two', folderType: 'bookmarks-bar' },
+        ],
+      },
+    ]);
+
+    const result = await handleBookmarkTab(1);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'Error: Bookmarks tree has multiple Bookmarks Bar root folders.',
+    });
+    expect(chrome.bookmarks.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('AI grouping provider selection', () => {
+  it('reports a missing key for the selected provider', async () => {
+    mockStore.senbetsu_settings = { ...DEFAULT_SETTINGS, activeProvider: 'gemini' };
+    await expect(handleSaveAndGroup()).resolves.toEqual({
+      ok: false,
+      error: 'Add your Gemini API key in Settings to use AI grouping.',
+    });
+  });
+
+  it('passes the active provider and its key to classification', async () => {
+    mockStore.senbetsu_settings = {
+      ...DEFAULT_SETTINGS,
+      activeProvider: 'anthropic',
+      apiKeys: { anthropic: 'sk-ant' },
+    };
+    (chrome.tabs.query as ReturnType<typeof vi.fn>).mockResolvedValue([mockTab]);
+    (chrome.tabGroups.query as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (classifyTabs as ReturnType<typeof vi.fn>).mockResolvedValue([{ tabId: 1, category: 'Other' }]);
+
+    await expect(handleSaveAndGroup()).resolves.toEqual({ ok: true });
+    expect(classifyTabs).toHaveBeenCalledWith(
+      expect.any(Array),
+      'anthropic',
+      'sk-ant',
+      undefined,
+      [],
+      5,
+    );
   });
 });

@@ -14,7 +14,8 @@ senbetsu/
 │   ├── background.ts       # Service worker (Central controller)
 │   └── popup/              # Extension popup UI (React + CSS)
 ├── lib/                    # Shared business logic and utilities
-│   ├── ai.ts               # OpenAI API integration
+│   ├── ai.ts               # Provider-neutral grouping orchestration
+│   ├── ai-provider.ts      # OpenAI, Claude, and Gemini REST adapters
 │   ├── commands.ts         # Actions fired from the popup
 │   ├── constants.ts        # Shared constants (Categories, Colors, Keys)
 │   ├── grouping.ts         # Logic for interacting with Chrome Tab Groups
@@ -35,10 +36,10 @@ The Background Service Worker serves as the operational brain of the extension.
 - **Message Listener:** Listens for `CMD_*` events from the popup.
 - **Lifecycle Management:** Cleans up memory maps when native tabs or windows are closed via `chrome.tabs.onRemoved` and `chrome.windows.onRemoved`.
 
-### C. AI Classification Engine (`lib/ai.ts`)
-Handles the payload generation and network request to the generic OpenAI Chat Completions API.
-- **Prompting:** Uses a zero-shot system prompt instructing the AI to dynamically generate categories (max 5-7). If the user provides a custom instruction prompt, the AI strictly categorizes tabs based on that prompt. Enforces a single-category JSON response (e.g., `{"category": "React Frameworks"}`).
-- **Batching:** `classifyTabs()` resolves multiple requests concurrently using `Promise.allSettled`.
+### C. AI Classification Engine (`lib/ai.ts`, `lib/ai-provider.ts`)
+`lib/ai.ts` builds a grouping prompt and validates returned tab IDs against the submitted-tab allowlist. `lib/ai-provider.ts` sends provider-specific REST requests from the background service worker to OpenAI Chat Completions, Anthropic Messages, or Gemini `generateContent`, with bounded requests and sanitized errors.
+
+The selected provider and separate provider keys are stored locally in `chrome.storage.local`. During grouping, tab titles and URLs are sent directly to the selected provider (OpenAI, Anthropic/Claude, or Google/Gemini); Senbetsu does not proxy that data through its own servers.
 
 ### D. Native Tab Grouping (`lib/grouping.ts`)
 Turns the AI classifications into physical browser changes using the `chrome.tabGroups` and `chrome.tabs` APIs.
@@ -69,7 +70,7 @@ To keep the UI uncoupled from the background APIs, actions in the popup dispatch
 ## 5. Storage Layer (`lib/storage.ts`)
 
 All persistent state utilizes `chrome.storage.local`.
-- **Settings:** Stores boolean preferences like `autoGroupEnabled` and `hasSeenOnboarding`. 
+- **Settings:** Stores grouping preferences, the selected AI provider, and separate local API keys for OpenAI, Claude, and Gemini.
 - **Sessions:** Saves an array of `SavedSession` objects, functioning like workspace snapshots that the user can restore later.
 
 ## 6. Development & Build

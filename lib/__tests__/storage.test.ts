@@ -7,58 +7,58 @@ vi.stubGlobal('chrome', {
   storage: {
     local: {
       get: vi.fn(async (key: string) => ({ [key]: mockStore[key] })),
-      set: vi.fn(async (items: Record<string, unknown>) => {
-        Object.assign(mockStore, items);
-      }),
+      set: vi.fn(async (items: Record<string, unknown>) => Object.assign(mockStore, items)),
     },
   },
 });
 
-// Import after mocking chrome
 const { storage } = await import('../storage');
 
 beforeEach(() => {
-  for (const key of Object.keys(mockStore)) {
-    delete mockStore[key];
-  }
+  for (const key of Object.keys(mockStore)) delete mockStore[key];
 });
 
 describe('storage.getSettings', () => {
-  it('returns default settings when nothing is stored', async () => {
+  it('returns independent normalized defaults when nothing is stored', async () => {
     const settings = await storage.getSettings();
-    expect(settings).toEqual(DEFAULT_SETTINGS);
+    settings.apiKeys.openai = 'changed';
+    expect(DEFAULT_SETTINGS.apiKeys.openai).toBeUndefined();
   });
 
-  it('returns stored settings', async () => {
-    const custom = { ...DEFAULT_SETTINGS, openaiApiKey: 'sk-123' };
-    mockStore.senbetsu_settings = custom;
-
+  it('migrates a legacy OpenAI key and preserves unrelated settings', async () => {
+    mockStore.senbetsu_settings = { openaiApiKey: 'sk-legacy', customSetting: 'keep' };
     const settings = await storage.getSettings();
-    expect(settings.openaiApiKey).toBe('sk-123');
+    expect(settings.apiKeys).toEqual({ openai: 'sk-legacy' });
+    expect(settings.activeProvider).toBe('openai');
+    expect(settings).toMatchObject({ customSetting: 'keep' });
+  });
+
+  it('prefers normalized keys and safely handles malformed provider storage', async () => {
+    mockStore.senbetsu_settings = {
+      activeProvider: 'invalid',
+      openaiApiKey: 'sk-legacy',
+      apiKeys: { openai: 'sk-new', anthropic: 42, gemini: '' },
+    };
+    const settings = await storage.getSettings();
+    expect(settings.activeProvider).toBe('openai');
+    expect(settings.apiKeys).toEqual({ openai: 'sk-new' });
   });
 });
 
-describe('storage.updateSettings', () => {
-  it('merges patch into existing settings', async () => {
-    await storage.updateSettings({ openaiApiKey: 'sk-test' });
+describe('storage API keys', () => {
+  it('keeps keys isolated and removes only the selected provider key', async () => {
+    await storage.saveApiKey('openai', 'sk-openai');
+    await storage.saveApiKey('anthropic', 'sk-ant');
+    await storage.saveApiKey('openai', null);
     const settings = await storage.getSettings();
-    expect(settings.openaiApiKey).toBe('sk-test');
-    expect(settings.bookmarkAutoClose).toBe(true);
-  });
-});
-
-describe('storage.saveApiKey', () => {
-  it('saves an API key', async () => {
-    await storage.saveApiKey('sk-test123');
-    const settings = await storage.getSettings();
-    expect(settings.openaiApiKey).toBe('sk-test123');
+    expect(settings.apiKeys).toEqual({ anthropic: 'sk-ant' });
   });
 
-  it('removes API key when null', async () => {
-    mockStore.senbetsu_settings = { ...DEFAULT_SETTINGS, openaiApiKey: 'sk-old' };
-
-    await storage.saveApiKey(null);
+  it('updates the selected provider without changing keys', async () => {
+    await storage.saveApiKey('gemini', 'AIza-key');
+    await storage.setActiveProvider('gemini');
     const settings = await storage.getSettings();
-    expect(settings.openaiApiKey).toBeUndefined();
+    expect(settings.activeProvider).toBe('gemini');
+    expect(settings.apiKeys.gemini).toBe('AIza-key');
   });
 });

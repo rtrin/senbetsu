@@ -38,6 +38,7 @@ vi.stubGlobal('chrome', {
   },
   bookmarks: {
     create: vi.fn(),
+    getTree: vi.fn(),
     getChildren: vi.fn(async (id: string) => mockBookmarkNodes[id] ?? []),
     get: vi.fn(async (id: string) => {
       // Search all nodes for the given id (mock implementation)
@@ -101,6 +102,9 @@ beforeEach(() => {
   for (const key of Object.keys(mockStore)) delete mockStore[key];
   for (const key of Object.keys(mockBookmarkNodes)) delete mockBookmarkNodes[key];
   onUpdatedListeners.length = 0;
+  mockFn(chrome.bookmarks.getTree).mockResolvedValue([
+    { id: 'root', children: [{ id: 'toolbar-root', folderType: 'bookmarks-bar' }] },
+  ]);
 });
 
 describe('handleSaveGroupToFolder', () => {
@@ -115,7 +119,10 @@ describe('handleSaveGroupToFolder', () => {
     const result = await handleSaveGroupToFolder([1, 2], 'Dev');
 
     expect(result.ok).toBe(true);
-    expect(chrome.bookmarks.create).toHaveBeenCalledWith({ parentId: '1', title: 'Dev' });
+    expect(chrome.bookmarks.create).toHaveBeenCalledWith({
+      parentId: 'toolbar-root',
+      title: 'Dev',
+    });
     expect(chrome.bookmarks.create).toHaveBeenCalledWith({
       parentId: '100',
       title: 'Page A',
@@ -147,11 +154,20 @@ describe('handleSaveGroupToFolder', () => {
 
     expect(chrome.tabs.remove).not.toHaveBeenCalled();
   });
+
+  it('returns an error without creating a folder when the Bookmarks Bar is missing', async () => {
+    mockFn(chrome.bookmarks.getTree).mockResolvedValue([{ id: 'root' }]);
+
+    const result = await handleSaveGroupToFolder([1], 'Dev');
+
+    expect(result).toEqual({ ok: false, error: 'Error: Bookmarks Bar root folder is missing.' });
+    expect(chrome.bookmarks.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('handleGetBookmarkFolders', () => {
   it('returns only folders (nodes without url) with child counts', async () => {
-    mockBookmarkNodes['1'] = [
+    mockBookmarkNodes['toolbar-root'] = [
       { id: '10', title: 'Dev' },
       { id: '11', title: 'Google', url: 'https://google.com' },
       { id: '12', title: 'Work' },
@@ -187,6 +203,16 @@ describe('handleGetBookmarkFolders', () => {
       childCount: 0,
       bookmarks: [],
     });
+    expect(chrome.bookmarks.getChildren).toHaveBeenCalledWith('toolbar-root');
+  });
+
+  it('returns an error without reading folders when the Bookmarks Bar is missing', async () => {
+    mockFn(chrome.bookmarks.getTree).mockResolvedValue([{ id: 'root' }]);
+
+    const result = await handleGetBookmarkFolders();
+
+    expect(result).toEqual({ ok: false, error: 'Error: Bookmarks Bar root folder is missing.' });
+    expect(chrome.bookmarks.getChildren).not.toHaveBeenCalled();
   });
 });
 
@@ -207,7 +233,7 @@ describe('handleOpenFolderAsGroup', () => {
       { id: '20', title: 'Page A', url: 'https://a.com' },
       { id: '21', title: 'Page B', url: 'https://b.com' },
     ];
-    mockBookmarkNodes['1'] = [{ id: '10', title: 'Dev', parentId: '1' }];
+    mockBookmarkNodes['toolbar-root'] = [{ id: '10', title: 'Dev', parentId: 'toolbar-root' }];
 
     mockFn(chrome.tabs.create).mockResolvedValueOnce({ id: 50 }).mockResolvedValueOnce({ id: 51 });
     mockFn(chrome.tabs.group).mockResolvedValue(5);
@@ -244,7 +270,9 @@ describe('handleOpenFolderAsGroup', () => {
       url: `https://example.com/${i}`,
     }));
     mockBookmarkNodes['10'] = bookmarks;
-    mockBookmarkNodes['1'] = [{ id: '10', title: 'Big Folder', parentId: '1' }];
+    mockBookmarkNodes['toolbar-root'] = [
+      { id: '10', title: 'Big Folder', parentId: 'toolbar-root' },
+    ];
 
     let tabIdCounter = 100;
     mockFn(chrome.tabs.create).mockImplementation(async () => ({ id: tabIdCounter++ }));

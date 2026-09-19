@@ -1,20 +1,28 @@
 import { classifyTabs } from './ai';
+import { AI_PROVIDER_METADATA } from './ai-provider';
+import { getBookmarksBarId } from './bookmarks';
 import { applyClassifications, moveTabToGroup } from './grouping';
 import { measureTabMemory } from './memory';
 import { getAnnotation, removeAnnotation, setAnnotation, storage } from './storage';
-import type { CommandResponse, TabClassificationInput } from './types';
+import type { AIProvider, CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
-async function getApiKey(): Promise<string | null> {
+async function getActiveProviderKey(): Promise<{ provider: AIProvider; apiKey: string | null }> {
   const settings = await storage.getSettings();
-  return settings.openaiApiKey ?? null;
+  return {
+    provider: settings.activeProvider,
+    apiKey: settings.apiKeys[settings.activeProvider] ?? null,
+  };
 }
 
 export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandResponse> {
   try {
-    const apiKey = await getApiKey();
+    const { provider, apiKey } = await getActiveProviderKey();
     if (!apiKey) {
-      return { ok: false, error: 'Add your OpenAI API key in Settings to use AI grouping.' };
+      return {
+        ok: false,
+        error: `Add your ${providerLabel(provider)} API key in Settings to use AI grouping.`,
+      };
     }
 
     const settings = await storage.getSettings();
@@ -45,6 +53,7 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
 
     const results = await classifyTabs(
       tabInputs,
+      provider,
       apiKey,
       userPrompt,
       existingGroups,
@@ -66,9 +75,12 @@ export async function handleClassifyUnsorted(
   unclassifiedTabIds: number[],
 ): Promise<CommandResponse> {
   try {
-    const apiKey = await getApiKey();
+    const { provider, apiKey } = await getActiveProviderKey();
     if (!apiKey) {
-      return { ok: false, error: 'Add your OpenAI API key in Settings to use AI grouping.' };
+      return {
+        ok: false,
+        error: `Add your ${providerLabel(provider)} API key in Settings to use AI grouping.`,
+      };
     }
 
     const allTabs = await chrome.tabs.query({ currentWindow: true });
@@ -96,6 +108,7 @@ export async function handleClassifyUnsorted(
 
     const results = await classifyTabs(
       tabInputs,
+      provider,
       apiKey,
       undefined,
       existingGroups,
@@ -166,9 +179,25 @@ export async function handleMoveTabToGroup(
   }
 }
 
-export async function handleSaveSettings(openaiApiKey: string | null): Promise<CommandResponse> {
+function providerLabel(provider: AIProvider): string {
+  return AI_PROVIDER_METADATA[provider].label;
+}
+
+export async function handleSaveSettings(
+  provider: AIProvider,
+  apiKey: string | null,
+): Promise<CommandResponse> {
   try {
-    await storage.saveApiKey(openaiApiKey);
+    await storage.saveApiKey(provider, apiKey);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleSelectAIProvider(provider: AIProvider): Promise<CommandResponse> {
+  try {
+    await storage.setActiveProvider(provider);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };
@@ -178,8 +207,9 @@ export async function handleSaveSettings(openaiApiKey: string | null): Promise<C
 export async function handleBookmarkTab(tabId: number): Promise<CommandResponse> {
   try {
     const tab = await chrome.tabs.get(tabId);
+    const bookmarksBarId = await getBookmarksBarId();
     await chrome.bookmarks.create({
-      parentId: '1',
+      parentId: bookmarksBarId,
       title: tab.title ?? tab.url ?? 'Untitled',
       url: tab.url,
     });
@@ -201,8 +231,9 @@ export async function handleSaveGroupToFolder(
   annotation?: string,
 ): Promise<CommandResponse> {
   try {
+    const bookmarksBarId = await getBookmarksBarId();
     const folder = await chrome.bookmarks.create({
-      parentId: '1',
+      parentId: bookmarksBarId,
       title: groupName,
     });
 
@@ -232,7 +263,8 @@ export async function handleSaveGroupToFolder(
 
 export async function handleGetBookmarkFolders(): Promise<CommandResponse> {
   try {
-    const children = await chrome.bookmarks.getChildren('1');
+    const bookmarksBarId = await getBookmarksBarId();
+    const children = await chrome.bookmarks.getChildren(bookmarksBarId);
     const folders = children.filter((node) => !node.url);
 
     const result = await Promise.all(
@@ -411,6 +443,22 @@ export async function handleRenameFolder(
   try {
     await chrome.bookmarks.update(folderId, { title: newName });
     return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleOffloadTabs(tabIds: number[]): Promise<CommandResponse> {
+  try {
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const activeTabId = activeTab?.id;
+    const discardable = tabIds.filter((id) => id !== activeTabId);
+    const results = await Promise.allSettled(discardable.map((id) => chrome.tabs.discard(id)));
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+    return {
+      ok: true,
+      data: { offloaded: succeeded, skipped: tabIds.length - discardable.length },
+    };
   } catch (e) {
     return { ok: false, error: String(e) };
   }

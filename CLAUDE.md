@@ -32,7 +32,8 @@ public/                     # Static assets (icons, images)
 ## Key Files
 
 - `lib/types.ts` — shared TypeScript types
-- `lib/ai.ts` — OpenAI integration for tab grouping
+- `lib/ai.ts` — provider-neutral grouping orchestration
+- `lib/ai-provider.ts` — OpenAI, Claude, and Gemini adapters
 - `lib/storage.ts` — chrome.storage wrapper
 - `lib/grouping.ts` — tab categorization logic
 - `lib/memory.ts` — tab memory usage tracking
@@ -68,3 +69,11 @@ Categories: `build`, `types`, `chrome-api`, `testing`, `lint`, `logic`, `config`
 Review this section before starting any task to avoid repeating past mistakes.
 
 <!-- Log mistakes below this line -->
+- **[lint]**: A provider storage documentation edit introduced trailing whitespace; run `git diff --check` after documentation changes.
+- **[testing]**: Strengthened grouping validation intentionally rejects a non-numeric tab ID, so the allowlist test must use an otherwise valid response and cover malformed IDs separately.
+- **[config]**: `npm ci` could not install dependencies because the existing `package-lock.json` is stale relative to the modified `package.json` (Vitest and related versions differ); do not regenerate the lockfile while preserving unrelated working-tree changes.
+- **[testing]**: The timeout adapter test attached its rejection assertion after advancing fake timers, creating an unhandled rejection; attach the assertion before advancing time.
+- **[config]**: `biome check .` is currently blocked by a checked-in schema version mismatch (2.4.11 config vs 2.4.4 CLI) and existing unrelated class-order findings; ran scoped formatting for provider changes instead.
+- **[types]**: Provider settings refactor invalidated OpenAI-only storage test types; update tests alongside the settings contract rather than retaining legacy fields in normalized types.
+- **[config]**: The documented Serena `initial_instructions` tool was unavailable in this environment; searched the Serena tool catalog and used the available onboarding/activation flow instead.
+- **[config]**: OpenCode's long-running service did not inherit the shell's GitHub token, leaving the MCP Authorization header empty; use a protected `{file:~/.config/opencode/github-token}` reference instead of relying on `{env:...}`.

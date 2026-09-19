@@ -16,11 +16,14 @@ export type TabGroupColor =
 // ─── Settings ───────────────────────────────────────────────────
 
 export interface AppSettings {
-  openaiApiKey?: string;
+  activeProvider: AIProvider;
+  apiKeys: Partial<Record<AIProvider, string>>;
   bookmarkAutoClose?: boolean;
   preserveExistingGroups?: boolean;
   maxGroups?: number;
 }
+
+export type AIProvider = 'openai' | 'anthropic' | 'gemini';
 
 // ─── Popup Commands ─────────────────────────────────────────────
 
@@ -73,7 +76,13 @@ export interface CmdMoveTabToGroup {
 
 export interface CmdSaveSettings {
   type: 'CMD_SAVE_SETTINGS';
-  openaiApiKey?: string | null;
+  provider: AIProvider;
+  apiKey: string | null;
+}
+
+export interface CmdSelectAIProvider {
+  type: 'CMD_SELECT_AI_PROVIDER';
+  provider: AIProvider;
 }
 
 export interface CmdBookmarkTab {
@@ -130,6 +139,11 @@ export interface CmdRenameFolder {
   newName: string;
 }
 
+export interface CmdOffloadTabs {
+  type: 'CMD_OFFLOAD_TABS';
+  tabIds: number[];
+}
+
 export interface CmdMoveBookmark {
   type: 'CMD_MOVE_BOOKMARK';
   bookmarkId: string;
@@ -145,6 +159,7 @@ export type PopupCommand =
   | CmdClassifyUnsorted
   | CmdMoveTabToGroup
   | CmdSaveSettings
+  | CmdSelectAIProvider
   | CmdBookmarkTab
   | CmdSaveGroupToFolder
   | CmdOpenFolderAsGroup
@@ -155,7 +170,8 @@ export type PopupCommand =
   | CmdRenameGroup
   | CmdRenameFolder
   | CmdMoveBookmark
-  | CmdUngroupTabs;
+  | CmdUngroupTabs
+  | CmdOffloadTabs;
 
 export interface CommandResponse {
   ok: boolean;
@@ -210,27 +226,5 @@ export interface AIGroupingResponse {
   groups: Array<{
     name: string;
     tabIds: number[];
-  }>;
-}
-
-// ─── OpenAI API Types ────────────────────────────────────────────
-
-export interface OpenAIMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface OpenAIChatRequest {
-  model: string;
-  messages: OpenAIMessage[];
-  temperature: number;
-  response_format: { type: 'json_object' };
-}
-
-export interface OpenAIChatResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
   }>;
 }

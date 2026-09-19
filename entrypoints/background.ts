@@ -9,6 +9,7 @@ import {
   handleGetMemoryUsage,
   handleMoveBookmark,
   handleMoveTabToGroup,
+  handleOffloadTabs,
   handleOpenBookmark,
   handleOpenFolderAsGroup,
   handleRenameFolder,
@@ -16,6 +17,7 @@ import {
   handleSaveAndGroup,
   handleSaveGroupToFolder,
   handleSaveSettings,
+  handleSelectAIProvider,
   handleSwitchTab,
   handleUngroupTabs,
 } from '@/lib/commands';
@@ -23,8 +25,11 @@ import { cleanupWindow, removeTab } from '@/lib/grouping';
 import { removeAnnotation } from '@/lib/storage';
 import type { ExtensionMessage } from '@/lib/types';
 
+const UNINSTALL_FEEDBACK_URL = 'https://forms.gle/CbwboV9kfFfz9ESz8';
+
 export default defineBackground(() => {
   console.log('[senbetsu] Background service worker started');
+  chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
     // ── Popup commands ──
@@ -54,7 +59,10 @@ export default defineBackground(() => {
           responsePromise = handleMoveTabToGroup(message.tabId, message.targetGroupName);
           break;
         case 'CMD_SAVE_SETTINGS':
-          responsePromise = handleSaveSettings(message.openaiApiKey ?? null);
+          responsePromise = handleSaveSettings(message.provider, message.apiKey);
+          break;
+        case 'CMD_SELECT_AI_PROVIDER':
+          responsePromise = handleSelectAIProvider(message.provider);
           break;
         case 'CMD_BOOKMARK_TAB':
           responsePromise = handleBookmarkTab(message.tabId);
@@ -92,6 +100,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_UNGROUP_TABS':
           responsePromise = handleUngroupTabs(message.tabIds);
+          break;
+        case 'CMD_OFFLOAD_TABS':
+          responsePromise = handleOffloadTabs(message.tabIds);
           break;
         default: {
           const _exhaustive: never = message;
