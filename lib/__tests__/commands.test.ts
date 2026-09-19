@@ -161,7 +161,7 @@ describe('AI grouping provider selection', () => {
     mockStore.senbetsu_settings = { ...DEFAULT_SETTINGS, activeProvider: 'gemini' };
     await expect(handleSaveAndGroup()).resolves.toEqual({
       ok: false,
-      error: 'Add your Gemini API key in Settings to use AI grouping.',
+      error: 'Add your Gemini API Key in Settings to use AI grouping.',
     });
   });
 

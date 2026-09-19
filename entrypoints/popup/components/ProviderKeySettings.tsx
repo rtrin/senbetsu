@@ -229,8 +229,8 @@ export function ProviderKeySettings(props: ProviderKeySettingsProps) {
         disabled={form.disabled}
       >
         <option value="openai">OpenAI</option>
-        <option value="anthropic">Claude</option>
-        <option value="gemini">Gemini</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="gemini">Google</option>
       </select>
       <ApiKeyControls
         apiKey={form.apiKey}

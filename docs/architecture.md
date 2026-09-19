@@ -39,7 +39,7 @@ The Background Service Worker serves as the operational brain of the extension.
 ### C. AI Classification Engine (`lib/ai.ts`, `lib/ai-provider.ts`)
 `lib/ai.ts` builds a grouping prompt and validates returned tab IDs against the submitted-tab allowlist. `lib/ai-provider.ts` sends provider-specific REST requests from the background service worker to OpenAI Chat Completions, Anthropic Messages, or Gemini `generateContent`, with bounded requests and sanitized errors.
 
-The selected provider and separate provider keys are stored locally in `chrome.storage.local`. During grouping, tab titles and URLs are sent directly to the selected provider (OpenAI, Anthropic/Claude, or Google/Gemini); Senbetsu does not proxy that data through its own servers.
+The selected provider and separate provider keys are stored locally in `chrome.storage.local`. During grouping, tab titles and URLs are sent directly to the selected provider (OpenAI, Anthropic, or Google); Senbetsu does not proxy that data through its own servers.
 
 ### D. Native Tab Grouping (`lib/grouping.ts`)
 Turns the AI classifications into physical browser changes using the `chrome.tabGroups` and `chrome.tabs` APIs.

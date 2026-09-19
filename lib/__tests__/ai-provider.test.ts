@@ -100,7 +100,7 @@ describe('requestGrouping', () => {
   it('reports invalid JSON and timeouts without leaking request details', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not json')));
     await expect(requestGrouping('gemini', 'key', 'system', 'tabs')).rejects.toThrow(
-      'Gemini returned an invalid response.',
+      'Google returned an invalid response.',
     );
     vi.useFakeTimers();
     vi.stubGlobal(
@@ -113,7 +113,7 @@ describe('requestGrouping', () => {
       ),
     );
     const result = requestGrouping('anthropic', 'key', 'system', 'tabs');
-    const assertion = expect(result).rejects.toThrow('Claude request timed out.');
+    const assertion = expect(result).rejects.toThrow('Anthropic request timed out.');
     await vi.advanceTimersByTimeAsync(30_000);
     await assertion;
     vi.useRealTimers();

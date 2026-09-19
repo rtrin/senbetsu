@@ -21,7 +21,7 @@ export async function handleSaveAndGroup(userPrompt?: string): Promise<CommandRe
     if (!apiKey) {
       return {
         ok: false,
-        error: `Add your ${providerLabel(provider)} API key in Settings to use AI grouping.`,
+        error: `Add your ${providerKeyLabel(provider)} in Settings to use AI grouping.`,
       };
     }
 
@@ -79,7 +79,7 @@ export async function handleClassifyUnsorted(
     if (!apiKey) {
       return {
         ok: false,
-        error: `Add your ${providerLabel(provider)} API key in Settings to use AI grouping.`,
+        error: `Add your ${providerKeyLabel(provider)} in Settings to use AI grouping.`,
       };
     }
 
@@ -179,8 +179,8 @@ export async function handleMoveTabToGroup(
   }
 }
 
-function providerLabel(provider: AIProvider): string {
-  return AI_PROVIDER_METADATA[provider].label;
+function providerKeyLabel(provider: AIProvider): string {
+  return AI_PROVIDER_METADATA[provider].keyLabel;
 }
 
 export async function handleSaveSettings(

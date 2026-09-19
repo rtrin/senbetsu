@@ -10,7 +10,7 @@ Organize tab clutter instantly using AI. Automatically group open tabs by topic,
 
 Is your browser drowning in open tabs? Stop wasting time trying to organize them manually. **Senbetsu** is a smart, AI-powered tab manager that automatically sorts your chaos into neatly labeled tab groups with a single click.
 
-Choose OpenAI, Claude, or Gemini to understand the context of your open tabs and categorize them intelligently, helping you stay focused, reclaim your browser's speed, and reduce memory bloat.
+Choose OpenAI, Anthropic, or Google to understand the context of your open tabs and categorize them intelligently, helping you stay focused, reclaim your browser's speed, and reduce memory bloat.
 
 ### ✨ Key Features
 
@@ -37,10 +37,10 @@ Senbetsu relies on your own OpenAI, Claude, or Gemini API key to process tab cla
 ---
 
 ### **Search Keywords (for the developer dashboard)**
-tab manager, AI tab grouper, tab organizer, memory tracker, reduce RAM, auto group tabs, OpenAI, Claude, Gemini, ChatGPT tab manager, tab groups, productivity, focus tools
+tab manager, AI tab grouper, tab organizer, memory tracker, reduce RAM, auto group tabs, OpenAI, Anthropic, Google, ChatGPT tab manager, tab groups, productivity, focus tools
 
 ---
 
 ## Pricing
 
-**Free** — all features including AI tab grouping. Bring your own OpenAI, Claude, or Gemini key; each key is stored locally in `chrome.storage.local` and never touches our servers. Provider API costs vary by selected model and usage.
+**Free** — all features including AI tab grouping. Bring your own OpenAI, Claude, or Gemini API key; each key is stored locally in `chrome.storage.local` and never touches our servers. Provider API costs vary by selected model and usage.

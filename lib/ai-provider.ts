@@ -17,14 +17,14 @@ export const AI_PROVIDER_METADATA: Record<AIProvider, AIProviderMetadata> = {
     helpText: 'Get one at platform.openai.com',
   },
   anthropic: {
-    label: 'Claude',
+    label: 'Anthropic',
     keyLabel: 'Claude API Key',
     placeholder: 'sk-ant-...',
     helpUrl: 'https://console.anthropic.com/settings/keys',
     helpText: 'Get one at console.anthropic.com',
   },
   gemini: {
-    label: 'Gemini',
+    label: 'Google',
     keyLabel: 'Gemini API Key',
     placeholder: 'AIza...',
     helpUrl: 'https://aistudio.google.com/app/apikey',
