@@ -1,6 +1,6 @@
 {
   "name": "AI Tab Manager & Group Organizer - Senbetsu",
-  "description": "Organize, save, and free up memory with this powerful tab manager. Use your OpenAI, Claude, or Gemini key for instant AI tab grouping.",
+  "description": "Organize, save, and free up memory with this powerful tab manager. Use your own AI provider key for instant AI tab grouping.",
   "private": true,
   "version": "1.2",
   "type": "module",
