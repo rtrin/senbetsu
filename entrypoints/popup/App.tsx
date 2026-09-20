@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants';
 import { storage } from '@/lib/storage';
 import type {
   AppSettings,
+  AutoOffloadInterval,
   BookmarkFolder,
   CommandResponse,
   PopupCommand,
@@ -32,21 +33,27 @@ function App() {
   const [folders, setFolders] = useState<BookmarkFolder[]>([]);
   const [isFetchingFolders, setIsFetchingFolders] = useState(false);
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
+  const [isSavingAutoOffload, setIsSavingAutoOffload] = useState(false);
+  const [autoOffloadError, setAutoOffloadError] = useState('');
   const [groupingError, setGroupingError] = useState('');
   const { tabs: liveTabs, groups: liveGroups, refresh: refreshLiveTabs } = useCurrentTabs();
   const { getGroupAnnotation, getFolderAnnotation, setGroupAnnotation, setFolderAnnotation } =
     useAnnotations();
 
   const refreshSettings = useCallback(async () => {
-    setSettings(await storage.getSettings());
+    try {
+      setSettings(await storage.getSettings());
+    } catch {
+      setAutoOffloadError('Could not load saved settings.');
+    }
   }, []);
 
   useEffect(() => {
-    refreshSettings();
+    void refreshSettings();
 
     const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
       if (STORAGE_KEYS.settings in changes) {
-        refreshSettings();
+        void refreshSettings();
       }
     };
     chrome.storage.onChanged.addListener(listener);
@@ -167,6 +174,26 @@ function App() {
     await sendCommand({ type: 'CMD_OFFLOAD_TABS', tabIds });
     fetchMemoryUsage();
   }, [memoryInfos, fetchMemoryUsage]);
+
+  const handleAutoOffloadIntervalChange = useCallback(
+    async (interval: AutoOffloadInterval) => {
+      setIsSavingAutoOffload(true);
+      setAutoOffloadError('');
+      try {
+        const response = await sendCommand({
+          type: 'CMD_UPDATE_SETTINGS',
+          patch: { autoOffloadInterval: interval },
+        });
+        if (!response.ok) throw new Error(response.error ?? 'Failed to save settings.');
+        await refreshSettings();
+      } catch {
+        setAutoOffloadError('Could not save automatic offload setting.');
+      } finally {
+        setIsSavingAutoOffload(false);
+      }
+    },
+    [refreshSettings],
+  );
 
   const handleCloseGroup = useCallback((tabIds: number[]) => {
     sendCommand({ type: 'CMD_CLOSE_GROUP', tabIds });
@@ -363,6 +390,10 @@ function App() {
           memoryInfos={memoryInfos.filter((info) => liveTabs.some((t) => t.id === info.tabId))}
           isFetching={isFetchingMemory}
           hasPermission={hasMemoryPermission}
+          autoOffloadInterval={settings.autoOffloadInterval}
+          isSavingAutoOffload={isSavingAutoOffload}
+          autoOffloadError={autoOffloadError}
+          onAutoOffloadIntervalChange={handleAutoOffloadIntervalChange}
           onRequestPermission={requestMemoryPermission}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}

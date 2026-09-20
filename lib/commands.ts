@@ -4,7 +4,7 @@ import { getBookmarksBarId } from './bookmarks';
 import { applyClassifications, moveTabToGroup } from './grouping';
 import { measureTabMemory } from './memory';
 import { getAnnotation, removeAnnotation, setAnnotation, storage } from './storage';
-import type { AIProvider, CommandResponse, TabClassificationInput } from './types';
+import type { AIProvider, AppSettings, CommandResponse, TabClassificationInput } from './types';
 import { isClassifiableUrl } from './utils';
 
 async function getActiveProviderKey(): Promise<{ provider: AIProvider; apiKey: string | null }> {
@@ -198,6 +198,15 @@ export async function handleSaveSettings(
 export async function handleSelectAIProvider(provider: AIProvider): Promise<CommandResponse> {
   try {
     await storage.setActiveProvider(provider);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function handleUpdateSettings(patch: Partial<AppSettings>): Promise<CommandResponse> {
+  try {
+    await storage.updateSettings(patch);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: String(e) };

@@ -1,17 +1,22 @@
 import { clsx } from 'clsx';
-import { storage } from '@/lib/storage';
-import type { AppSettings } from '@/lib/types';
+import type { AppSettings, CommandResponse, PopupCommand } from '@/lib/types';
 
 interface SettingsPreferencesProps {
   settings: AppSettings;
+  sendCommand: (cmd: PopupCommand) => Promise<CommandResponse>;
   onSettingsChanged: () => void;
 }
 
-export function SettingsPreferences({ settings, onSettingsChanged }: SettingsPreferencesProps) {
+export function SettingsPreferences({
+  settings,
+  sendCommand,
+  onSettingsChanged,
+}: SettingsPreferencesProps) {
   const bookmarkAutoClose = settings.bookmarkAutoClose !== false;
   const preserveExistingGroups = settings.preserveExistingGroups !== false;
   const update = async (patch: Partial<AppSettings>) => {
-    await storage.updateSettings(patch);
+    const response = await sendCommand({ type: 'CMD_UPDATE_SETTINGS', patch });
+    if (!response.ok) throw new Error(response.error ?? 'Failed to save settings.');
     onSettingsChanged();
   };
   return (

@@ -77,3 +77,5 @@ Review this section before starting any task to avoid repeating past mistakes.
 - **[types]**: Provider settings refactor invalidated OpenAI-only storage test types; update tests alongside the settings contract rather than retaining legacy fields in normalized types.
 - **[config]**: The documented Serena `initial_instructions` tool was unavailable in this environment; searched the Serena tool catalog and used the available onboarding/activation flow instead.
 - **[config]**: OpenCode's long-running service did not inherit the shell's GitHub token, leaving the MCP Authorization header empty; use a protected `{file:~/.config/opencode/github-token}` reference instead of relying on `{env:...}`.
+- **[types]**: Chrome tab test fixtures require the non-optional `selected` and `groupId` fields; include them when constructing `chrome.tabs.Tab` mocks.
+- **[testing]**: `vi.clearAllMocks()` does not remove queued `mockResolvedValueOnce` implementations; reset affected mocks when tests intentionally leave a one-shot mock unused.

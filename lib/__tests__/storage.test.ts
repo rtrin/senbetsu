@@ -43,6 +43,20 @@ describe('storage.getSettings', () => {
     expect(settings.activeProvider).toBe('openai');
     expect(settings.apiKeys).toEqual({ openai: 'sk-new' });
   });
+
+  it('defaults malformed automatic offload intervals to Off', async () => {
+    for (const value of [0, 2, '1', Infinity, null, undefined]) {
+      mockStore.senbetsu_settings = { autoOffloadInterval: value };
+      await expect(storage.getSettings()).resolves.toMatchObject({ autoOffloadInterval: 'off' });
+    }
+  });
+
+  it('normalizes each supported automatic offload interval', async () => {
+    for (const value of [1, 3, 5] as const) {
+      mockStore.senbetsu_settings = { autoOffloadInterval: value };
+      await expect(storage.getSettings()).resolves.toMatchObject({ autoOffloadInterval: value });
+    }
+  });
 });
 
 describe('storage API keys', () => {
@@ -60,5 +74,45 @@ describe('storage API keys', () => {
     const settings = await storage.getSettings();
     expect(settings.activeProvider).toBe('gemini');
     expect(settings.apiKeys.gemini).toBe('AIza-key');
+  });
+
+  it('serializes overlapping settings changes without losing either field', async () => {
+    await Promise.all([
+      storage.updateSettings({ autoOffloadInterval: 3 }),
+      storage.updateSettings({ maxGroups: 7 }),
+    ]);
+
+    await expect(storage.getSettings()).resolves.toMatchObject({
+      autoOffloadInterval: 3,
+      maxGroups: 7,
+    });
+  });
+
+  it('re-reads and merges when another writer changes storage during a save', async () => {
+    const setMock = chrome.storage.local.set as ReturnType<typeof vi.fn>;
+    const originalSet = setMock.getMockImplementation()!;
+    let writes = 0;
+    setMock.mockImplementation(async (items: Record<string, unknown>) => {
+      Object.assign(mockStore, items);
+      writes += 1;
+      if (writes === 1) {
+        mockStore.senbetsu_settings = {
+          ...(mockStore.senbetsu_settings as Record<string, unknown>),
+          autoOffloadInterval: 'off',
+          maxGroups: 9,
+        };
+      }
+    });
+
+    try {
+      await storage.updateSettings({ autoOffloadInterval: 5 });
+      await expect(storage.getSettings()).resolves.toMatchObject({
+        autoOffloadInterval: 5,
+        maxGroups: 9,
+      });
+      expect(writes).toBe(2);
+    } finally {
+      setMock.mockImplementation(originalSet);
+    }
   });
 });

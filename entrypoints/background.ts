@@ -1,3 +1,4 @@
+import { createAutoOffloadController } from '@/lib/auto-offload';
 import {
   handleBookmarkTab,
   handleClassifyUnsorted,
@@ -20,6 +21,7 @@ import {
   handleSelectAIProvider,
   handleSwitchTab,
   handleUngroupTabs,
+  handleUpdateSettings,
 } from '@/lib/commands';
 import { cleanupWindow, removeTab } from '@/lib/grouping';
 import { removeAnnotation } from '@/lib/storage';
@@ -30,6 +32,27 @@ const UNINSTALL_FEEDBACK_URL = 'https://forms.gle/CbwboV9kfFfz9ESz8';
 export default defineBackground(() => {
   console.log('[senbetsu] Background service worker started');
   chrome.runtime.setUninstallURL(UNINSTALL_FEEDBACK_URL);
+
+  const autoOffload = createAutoOffloadController();
+  const reportAutoOffloadError = () => {
+    console.warn('[senbetsu] Automatic offload could not complete; it will retry later.');
+  };
+
+  // Register durable-worker listeners before the initial reconciliation.
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    void autoOffload
+      .onAlarm(alarm)
+      .then((result) => {
+        if (result && result.failed > 0) {
+          console.warn(`[senbetsu] Automatic offload skipped ${result.failed} tab operation(s).`);
+        }
+      })
+      .catch(reportAutoOffloadError);
+  });
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    void autoOffload.onStorageChanged(changes, areaName).catch(reportAutoOffloadError);
+  });
+  void autoOffload.reconcile().catch(reportAutoOffloadError);
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
     // ── Popup commands ──
@@ -63,6 +86,9 @@ export default defineBackground(() => {
           break;
         case 'CMD_SELECT_AI_PROVIDER':
           responsePromise = handleSelectAIProvider(message.provider);
+          break;
+        case 'CMD_UPDATE_SETTINGS':
+          responsePromise = handleUpdateSettings(message.patch);
           break;
         case 'CMD_BOOKMARK_TAB':
           responsePromise = handleBookmarkTab(message.tabId);

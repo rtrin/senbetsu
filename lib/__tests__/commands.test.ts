@@ -51,7 +51,7 @@ vi.mock('../memory', () => ({
   measureTabMemory: vi.fn(),
 }));
 
-const { handleBookmarkTab, handleSaveAndGroup } = await import('../commands');
+const { handleBookmarkTab, handleSaveAndGroup, handleUpdateSettings } = await import('../commands');
 const { classifyTabs } = await import('../ai');
 
 const mockTab = {
@@ -184,5 +184,35 @@ describe('AI grouping provider selection', () => {
       [],
       5,
     );
+  });
+});
+
+describe('settings mutations', () => {
+  it('does not let a second writer commit between the first read and write', async () => {
+    mockStore.senbetsu_settings = { ...DEFAULT_SETTINGS };
+    const getMock = chrome.storage.local.get as ReturnType<typeof vi.fn>;
+    const initialSettings = {
+      ...(mockStore.senbetsu_settings as Record<string, unknown>),
+    };
+    let releaseRead: ((value: Record<string, unknown>) => void) | undefined;
+    getMock.mockImplementationOnce(
+      (key: string) =>
+        new Promise((resolve) => {
+          releaseRead = (value) => resolve({ [key]: value });
+        }),
+    );
+
+    const first = handleUpdateSettings({ autoOffloadInterval: 3 });
+    await vi.waitFor(() => expect(releaseRead).toBeTypeOf('function'));
+    const second = handleUpdateSettings({ maxGroups: 7 });
+    await Promise.resolve();
+    expect(chrome.storage.local.set).not.toHaveBeenCalled();
+    releaseRead?.(initialSettings as Record<string, unknown>);
+
+    await expect(Promise.all([first, second])).resolves.toEqual([{ ok: true }, { ok: true }]);
+    expect(mockStore.senbetsu_settings).toMatchObject({
+      autoOffloadInterval: 3,
+      maxGroups: 7,
+    });
   });
 });

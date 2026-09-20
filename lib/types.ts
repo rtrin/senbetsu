@@ -15,9 +15,12 @@ export type TabGroupColor =
 
 // ─── Settings ───────────────────────────────────────────────────
 
+export type AutoOffloadInterval = 'off' | 1 | 3 | 5;
+
 export interface AppSettings {
   activeProvider: AIProvider;
   apiKeys: Partial<Record<AIProvider, string>>;
+  autoOffloadInterval: AutoOffloadInterval;
   bookmarkAutoClose?: boolean;
   preserveExistingGroups?: boolean;
   maxGroups?: number;
@@ -83,6 +86,11 @@ export interface CmdSaveSettings {
 export interface CmdSelectAIProvider {
   type: 'CMD_SELECT_AI_PROVIDER';
   provider: AIProvider;
+}
+
+export interface CmdUpdateSettings {
+  type: 'CMD_UPDATE_SETTINGS';
+  patch: Partial<AppSettings>;
 }
 
 export interface CmdBookmarkTab {
@@ -160,6 +168,7 @@ export type PopupCommand =
   | CmdMoveTabToGroup
   | CmdSaveSettings
   | CmdSelectAIProvider
+  | CmdUpdateSettings
   | CmdBookmarkTab
   | CmdSaveGroupToFolder
   | CmdOpenFolderAsGroup

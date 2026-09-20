@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './constants';
-import type { AIProvider, AppSettings } from './types';
+import type { AIProvider, AppSettings, AutoOffloadInterval } from './types';
 
 async function get<T>(key: string, fallback: T): Promise<T> {
   const result = await chrome.storage.local.get(key);
@@ -16,6 +16,10 @@ const PROVIDERS: AIProvider[] = ['openai', 'anthropic', 'gemini'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function normalizeAutoOffloadInterval(value: unknown): AutoOffloadInterval {
+  return value === 1 || value === 3 || value === 5 || value === 'off' ? value : 'off';
 }
 
 function normalizeSettings(value: unknown): AppSettings {
@@ -42,7 +46,13 @@ function normalizeSettings(value: unknown): AppSettings {
     openaiApiKey: _legacyKey,
     ...rest
   } = raw;
-  return { ...DEFAULT_SETTINGS, ...rest, activeProvider, apiKeys };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...rest,
+    activeProvider,
+    apiKeys,
+    autoOffloadInterval: normalizeAutoOffloadInterval(raw.autoOffloadInterval),
+  };
 }
 
 export async function setAnnotation(key: string, text: string): Promise<void> {
@@ -65,29 +75,74 @@ export async function getAnnotation(key: string): Promise<string> {
   return map[key] ?? '';
 }
 
+const MAX_SETTINGS_MUTATION_ATTEMPTS = 3;
+let settingsMutationQueue = Promise.resolve();
+
+function valuesMatch(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function patchMatches(settings: AppSettings, patch: Partial<AppSettings>): boolean {
+  return Object.entries(patch).every(([key, value]) => {
+    if (key === 'apiKeys') {
+      return Object.entries(value ?? {}).every(([provider, keyValue]) =>
+        valuesMatch(settings.apiKeys[provider as AIProvider], keyValue),
+      );
+    }
+    return valuesMatch(settings[key as keyof AppSettings], value);
+  });
+}
+
+function enqueueSettingsMutation<T>(mutation: () => Promise<T>): Promise<T> {
+  const next = settingsMutationQueue.then(mutation, mutation);
+  settingsMutationQueue = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
+async function updateSettingsMutation(
+  patch: Partial<AppSettings>,
+  mergeApiKeys = true,
+): Promise<void> {
+  let current = await storage.getSettings();
+
+  for (let attempt = 0; attempt < MAX_SETTINGS_MUTATION_ATTEMPTS; attempt += 1) {
+    await set(STORAGE_KEYS.settings, {
+      ...current,
+      ...patch,
+      apiKeys: mergeApiKeys ? { ...current.apiKeys, ...patch.apiKeys } : patch.apiKeys,
+    });
+
+    const saved = await storage.getSettings();
+    if (patchMatches(saved, patch)) return;
+    current = saved;
+  }
+
+  throw new Error('Settings changed while saving; please try again.');
+}
+
 export const storage = {
   async getSettings(): Promise<AppSettings> {
     return normalizeSettings(await get<unknown>(STORAGE_KEYS.settings, {}));
   },
 
   async updateSettings(patch: Partial<AppSettings>): Promise<void> {
-    const current = await this.getSettings();
-    await set(STORAGE_KEYS.settings, {
-      ...current,
-      ...patch,
-      apiKeys: { ...current.apiKeys, ...patch.apiKeys },
-    });
+    return enqueueSettingsMutation(() => updateSettingsMutation(patch));
   },
 
   async saveApiKey(provider: AIProvider, key: string | null): Promise<void> {
-    const current = await this.getSettings();
-    const apiKeys = { ...current.apiKeys };
-    if (key === null) {
-      delete apiKeys[provider];
-    } else {
-      apiKeys[provider] = key;
-    }
-    await set(STORAGE_KEYS.settings, { ...current, apiKeys });
+    return enqueueSettingsMutation(async () => {
+      const current = await this.getSettings();
+      const apiKeys = { ...current.apiKeys };
+      if (key === null) {
+        delete apiKeys[provider];
+      } else {
+        apiKeys[provider] = key;
+      }
+      await updateSettingsMutation({ apiKeys }, false);
+    });
   },
 
   async setActiveProvider(provider: AIProvider): Promise<void> {

@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ['tabs', 'tabGroups', 'storage', 'bookmarks'],
+    permissions: ['tabs', 'tabGroups', 'storage', 'bookmarks', 'alarms'],
     host_permissions: [
       'https://senbetsuapp.com/*',
       'https://api.lemonsqueezy.com/*',

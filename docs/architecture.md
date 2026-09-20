@@ -1,5 +1,26 @@
 # Senbetsu Architecture Documentation
 
+## Automatic Tab Offloading
+
+The Memory view stores its automatic offload interval in
+`chrome.storage.local`. A `chrome.storage.onChanged` listener in the MV3
+service worker reconciles one durable alarm named `senbetsu-auto-offload`;
+enabled settings use a 30-second cadence and Off clears it. The alarm re-reads
+the latest setting, queries tabs across all windows, and calls
+`chrome.tabs.discard` for eligible tabs. Only completed HTTP(S) tabs with valid
+metadata and sufficient `lastAccessed` age are considered. Active, pinned,
+incognito, audible, frozen, discarded, loading, non-auto-discardable, and
+special/internal tabs are excluded.
+
+The popup setting remains available without the optional scripting permission;
+that permission only gates memory measurement. Automatic offloading is Off by
+default and does not use content scripts or memory polling. Settings changes
+invalidate in-flight sweeps and are checked again before each discard. A
+Chrome operation already dispatched cannot be cancelled, so this guarantee is
+for the final state observed immediately before dispatch. Individual failures
+are isolated with `Promise.allSettled` and only aggregate, non-sensitive
+warnings are logged.
+
 ## 1. Overview
 **Senbetsu** is an AI-powered tab manager for Chrome that categorizes and auto-groups open tabs into Chrome Tab Groups based on the webpage's context. It is built using the **WXT** extension framework, **React** for the UI, and **TypeScript** for end-to-end type safety.
 

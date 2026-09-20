@@ -17,7 +17,11 @@ export function SettingsPanel({ settings, sendCommand, onSettingsChanged }: Sett
         sendCommand={sendCommand}
         onSettingsChanged={onSettingsChanged}
       />
-      <SettingsPreferences settings={settings} onSettingsChanged={onSettingsChanged} />
+      <SettingsPreferences
+        settings={settings}
+        sendCommand={sendCommand}
+        onSettingsChanged={onSettingsChanged}
+      />
       <SettingsTips />
     </section>
   );
